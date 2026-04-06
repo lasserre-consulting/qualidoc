@@ -1,0 +1,259 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-theme
+  namespace: qualidoc
+data:
+  theme.properties: |
+    parent=keycloak
+    import=common/keycloak
+    styles=css/login.css
+    locales=fr
+    defaultLocale=fr
+
+  login.css: |
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    /* ── Body : colonne flex pleine hauteur ──────────────────────────────────── */
+    html { height: 100%; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      height: 100%;
+      display: flex !important;
+      flex-direction: column !important;
+      font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif !important;
+      background: linear-gradient(150deg, #1565C0 0%, #0d47a1 60%, #0a3473 100%) !important;
+      background-image: linear-gradient(150deg, #1565C0 0%, #0d47a1 60%, #0a3473 100%) !important;
+    }
+
+    /* ── Header : logo + nom au-dessus de la carte ───────────────────────────── */
+    #kc-header {
+      background: transparent !important;
+      box-shadow: none !important;
+      padding: 40px 16px 24px !important;
+      text-align: center !important;
+      flex-shrink: 0;
+    }
+
+    /* Masque le nom du realm (ex: "qualidoc") — remplacé par le SVG ci-dessous */
+    #kc-header-wrapper {
+      color: transparent !important;
+      font-size: 0 !important;
+      line-height: 0 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+    }
+
+    /* ── Logo : "Quali [bouclier] Doc" en un seul SVG ────────────────────────── */
+    #kc-header-wrapper::before {
+      content: '';
+      display: block;
+      width: 280px;
+      height: 68px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 260 68'%3E%3Ctext x='112' y='52' text-anchor='end' font-family='Roboto,Arial,sans-serif' font-size='44' font-weight='700' fill='white'%3EQuali%3C/text%3E%3Cg transform='translate(114, 5)'%3E%3Cpath d='M16 0 L32 7 L32 22 C32 32 25 39 16 42 C7 39 0 32 0 22 L0 7 Z' fill='white'/%3E%3Cpath d='M7 22 L13 28 L25 13' stroke='%231565C0' stroke-width='4' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/g%3E%3Ctext x='150' y='52' text-anchor='start' font-family='Roboto,Arial,sans-serif' font-size='44' font-weight='300' fill='rgba(255,255,255,0.85)'%3EDoc%3C/text%3E%3C/svg%3E");
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      filter: drop-shadow(0 3px 10px rgba(0,0,0,0.2));
+    }
+
+    /* ── Sous-titre ──────────────────────────────────────────────────────────── */
+    #kc-header-wrapper::after {
+      content: 'Plateforme qualité';
+      font-size: 13px !important;
+      font-weight: 300 !important;
+      color: rgba(255,255,255,0.7) !important;
+      letter-spacing: 0.3px;
+      margin-top: 8px;
+      display: block;
+    }
+
+    /* ── Zone principale : remplit l'espace, centre la carte ─────────────────── */
+    .container-fluid {
+      flex: 1 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: center !important;
+      padding: 16px 16px 48px !important;
+      background: transparent !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+
+    /* ── Row : contraindre la largeur max ────────────────────────────────────── */
+    .row {
+      max-width: 460px !important;
+      width: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    /* ── Colonnes Bootstrap : annuler float et offsets ───────────────────────── */
+    .col-xs-12,
+    .col-sm-10,
+    .col-md-6,
+    .col-lg-6,
+    [class*="col-"] {
+      width: 100% !important;
+      max-width: none !important;
+      flex: none !important;
+      float: none !important;
+      padding: 0 !important;
+    }
+
+    /* Suppression de tous les offsets Bootstrap */
+    .col-sm-offset-1,
+    .col-md-offset-3,
+    .col-lg-offset-3,
+    [class*="col-offset-"] {
+      margin-left: 0 !important;
+    }
+
+    /* ── Carte blanche ───────────────────────────────────────────────────────── */
+    .card-pf {
+      background: white !important;
+      border: none !important;
+      border-radius: 16px !important;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.28) !important;
+      padding: 36px 40px 40px !important;
+      width: 50% !important;
+      overflow: visible !important;
+      justify-self: center;
+    }
+
+    /* ── Titre de la page ────────────────────────────────────────────────────── */
+    #kc-page-title {
+      font-family: 'Roboto', sans-serif !important;
+      font-size: 17px !important;
+      font-weight: 500 !important;
+      color: #424242 !important;
+      text-align: center !important;
+      margin: 0 0 28px !important;
+    }
+
+    /* ── Labels ──────────────────────────────────────────────────────────────── */
+    .control-label, label {
+      font-family: 'Roboto', sans-serif !important;
+      font-size: 11.5px !important;
+      font-weight: 500 !important;
+      color: #757575 !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.7px !important;
+      margin-bottom: 6px !important;
+      display: block;
+    }
+
+    /* ── Champs de saisie ────────────────────────────────────────────────────── */
+    .form-control,
+    input[type="text"],
+    input[type="password"],
+    input[type="email"] {
+      font-family: 'Roboto', sans-serif !important;
+      font-size: 14px !important;
+      border: 1.5px solid #e8e8e8 !important;
+      border-radius: 8px !important;
+      padding: 12px 14px !important;
+      height: 48px !important;
+      width: 100% !important;
+      background: #f8f9fa !important;
+      color: #212121 !important;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease !important;
+      box-shadow: none !important;
+    }
+
+    .form-control:focus,
+    input[type="text"]:focus,
+    input[type="password"]:focus {
+      border-color: #1565C0 !important;
+      background: white !important;
+      box-shadow: 0 0 0 3px rgba(21,101,192,0.10) !important;
+      outline: none !important;
+    }
+
+    /* ── Espacement des groupes ──────────────────────────────────────────────── */
+    .form-group { margin-bottom: 20px !important; }
+
+    /* ── Options (remember me + mot de passe oublié) ─────────────────────────── */
+    #kc-form-options {
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+      margin-bottom: 24px !important;
+      margin-top: 2px !important;
+    }
+
+    #kc-form-options .checkbox label {
+      font-size: 13px !important;
+      text-transform: none !important;
+      letter-spacing: 0 !important;
+      color: #9e9e9e !important;
+      font-weight: 400 !important;
+    }
+
+    #rememberMe { accent-color: #1565C0 !important; }
+
+    /* ── Bouton Se connecter ─────────────────────────────────────────────────── */
+    .btn-primary,
+    #kc-login,
+    input[type="submit"] {
+      background: linear-gradient(135deg, #1976D2 0%, #0d47a1 100%) !important;
+      border: none !important;
+      border-radius: 8px !important;
+      color: white !important;
+      font-family: 'Roboto', sans-serif !important;
+      font-size: 14px !important;
+      font-weight: 500 !important;
+      letter-spacing: 1px !important;
+      text-transform: uppercase !important;
+      height: 48px !important;
+      width: 100% !important;
+      box-shadow: 0 4px 16px rgba(21,101,192,0.35) !important;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease !important;
+      cursor: pointer !important;
+    }
+
+    .btn-primary:hover,
+    #kc-login:hover,
+    input[type="submit"]:hover {
+      transform: translateY(-2px) !important;
+      box-shadow: 0 8px 24px rgba(21,101,192,0.45) !important;
+      opacity: 0.95 !important;
+    }
+
+    .btn-primary:active, #kc-login:active {
+      transform: translateY(0) !important;
+      box-shadow: 0 2px 8px rgba(21,101,192,0.3) !important;
+    }
+
+    /* ── Liens ───────────────────────────────────────────────────────────────── */
+    a {
+      color: #1565C0 !important;
+      text-decoration: none !important;
+      font-size: 13px !important;
+    }
+    a:hover { color: #0d47a1 !important; text-decoration: underline !important; }
+
+    /* ── Message d'erreur ────────────────────────────────────────────────────── */
+    .alert-error {
+      background: #fff5f5 !important;
+      border: 1px solid #ffcdd2 !important;
+      border-left: 4px solid #e53935 !important;
+      border-radius: 8px !important;
+      padding: 12px 14px !important;
+      margin-bottom: 20px !important;
+      font-size: 13px !important;
+      color: #c62828 !important;
+    }
+
+    /* ── Pied de carte ───────────────────────────────────────────────────────── */
+    .login-pf-signup {
+      text-align: center !important;
+      margin-top: 20px !important;
+      font-size: 13px !important;
+      color: #bdbdbd !important;
+    }

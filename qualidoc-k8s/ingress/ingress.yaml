@@ -1,0 +1,50 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: qualidoc-ingress
+  namespace: qualidoc
+  annotations:
+    kubernetes.io/ingress.class: traefik
+spec:
+  tls:
+    - hosts:
+        - qualidoc.fr
+        - api.qualidoc.fr
+        - keycloak.qualidoc.fr
+      secretName: qualidoc-tls
+  rules:
+    # Frontend Angular
+    - host: qualidoc.fr
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-service
+                port:
+                  number: 80
+
+    # Backend REST API
+    - host: api.qualidoc.fr
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: backend-service
+                port:
+                  number: 8080
+
+    # Keycloak
+    - host: keycloak.qualidoc.fr
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: keycloak-service
+                port:
+                  number: 8180

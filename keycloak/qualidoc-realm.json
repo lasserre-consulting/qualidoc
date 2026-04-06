@@ -1,0 +1,59 @@
+{
+  "realm": "qualidoc",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "clients": [
+    {
+      "clientId": "qualidoc-frontend",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": [
+        "https://www.lasserre-consulting.fr/qualidoc/*",
+        "http://localhost:4200/*"
+      ],
+      "webOrigins": [
+        "https://www.lasserre-consulting.fr",
+        "http://localhost:4200"
+      ]
+    }
+  ],
+  "roles": {
+    "realm": [
+      { "name": "READER", "description": "Peut lire les documents" },
+      { "name": "EDITOR", "description": "Peut créer et modifier les documents" }
+    ]
+  },
+  "users": [
+    {
+      "id": "f497de6d-2526-4cf6-ab29-89ab76ef448d",
+      "username": "demo",
+      "enabled": true,
+      "email": "demo@lasserre-consulting.fr",
+      "firstName": "Demo",
+      "lastName": "User",
+      "credentials": [
+        { "type": "password", "value": "Demo1234!", "temporary": false }
+      ],
+      "realmRoles": ["EDITOR", "READER"]
+    },
+    {
+      "id": "81ecd0bd-914d-4a94-b6ac-75c0493af52b",
+      "username": "lecteur",
+      "enabled": true,
+      "email": "lecteur@lasserre-consulting.fr",
+      "firstName": "Lecteur",
+      "lastName": "User",
+      "credentials": [
+        { "type": "password", "value": "Demo1234!", "temporary": false }
+      ],
+      "realmRoles": ["READER"]
+    }
+  ]
+}

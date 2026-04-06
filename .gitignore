@@ -1,0 +1,11 @@
+qualidoc-backend/.gradle/
+qualidoc-backend/build/
+qualidoc-frontend/node_modules/
+qualidoc-frontend/dist/
+qualidoc-frontend/.angular/
+qualidoc-k8s/config/secrets.yaml
+.idea/
+.vscode/
+*.env
+*.pem
+*.key

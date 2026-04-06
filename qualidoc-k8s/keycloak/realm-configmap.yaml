@@ -1,0 +1,140 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-realm
+  namespace: qualidoc
+data:
+  qualidoc-realm.json: |
+    {
+      "realm": "qualidoc",
+      "enabled": true,
+      "displayName": "QualiDoc",
+      "sslRequired": "external",
+      "registrationAllowed": false,
+      "loginWithEmailAllowed": true,
+      "duplicateEmailsAllowed": false,
+      "resetPasswordAllowed": true,
+      "editUsernameAllowed": false,
+      "accessTokenLifespan": 300,
+      "roles": {
+        "realm": [
+          {
+            "name": "EDITOR",
+            "description": "Upload et suppression de documents",
+            "composite": false
+          },
+          {
+            "name": "VIEWER",
+            "description": "Lecture seule",
+            "composite": false
+          }
+        ]
+      },
+      "clients": [
+        {
+          "clientId": "qualidoc-frontend",
+          "name": "QualiDoc Frontend",
+          "enabled": true,
+          "publicClient": true,
+          "standardFlowEnabled": true,
+          "implicitFlowEnabled": false,
+          "directAccessGrantsEnabled": false,
+          "serviceAccountsEnabled": false,
+          "redirectUris": [
+            "https://qualidoc.fr/*"
+          ],
+          "attributes": {
+            "post.logout.redirect.uris": "https://qualidoc.fr/*"
+          },
+          "webOrigins": [
+            "https://qualidoc.fr"
+          ],
+          "fullScopeAllowed": true,
+          "protocol": "openid-connect",
+          "protocolMappers": [
+            {
+              "name": "establishment_id",
+              "protocol": "openid-connect",
+              "protocolMapper": "oidc-usermodel-attribute-mapper",
+              "consentRequired": false,
+              "config": {
+                "userinfo.token.claim": "true",
+                "user.attribute": "establishment_id",
+                "id.token.claim": "true",
+                "access.token.claim": "true",
+                "claim.name": "establishment_id",
+                "jsonType.label": "String",
+                "multivalued": "false",
+                "aggregate.attrs": "false"
+              }
+            }
+          ]
+        }
+      ],
+      "users": [
+        {
+          "id": "22222222-0000-0000-0000-000000000001",
+          "username": "editor@chu-toulouse.fr",
+          "email": "editor@chu-toulouse.fr",
+          "firstName": "Editor",
+          "lastName": "CHU Toulouse",
+          "enabled": true,
+          "emailVerified": true,
+          "realmRoles": ["EDITOR"],
+          "attributes": {
+            "establishment_id": ["11111111-0000-0000-0000-000000000001"]
+          },
+          "credentials": [
+            { "type": "password", "value": "qualidoc123", "temporary": false }
+          ]
+        },
+        {
+          "id": "22222222-0000-0000-0000-000000000002",
+          "username": "reader@chu-toulouse.fr",
+          "email": "reader@chu-toulouse.fr",
+          "firstName": "Reader",
+          "lastName": "CHU Toulouse",
+          "enabled": true,
+          "emailVerified": true,
+          "realmRoles": ["VIEWER"],
+          "attributes": {
+            "establishment_id": ["11111111-0000-0000-0000-000000000001"]
+          },
+          "credentials": [
+            { "type": "password", "value": "qualidoc123", "temporary": false }
+          ]
+        },
+        {
+          "id": "22222222-0000-0000-0000-000000000003",
+          "username": "qualite@clinique-saintjean.fr",
+          "email": "qualite@clinique-saintjean.fr",
+          "firstName": "Qualite",
+          "lastName": "Clinique Saint-Jean",
+          "enabled": true,
+          "emailVerified": true,
+          "realmRoles": ["EDITOR"],
+          "attributes": {
+            "establishment_id": ["11111111-0000-0000-0000-000000000002"]
+          },
+          "credentials": [
+            { "type": "password", "value": "qualidoc123", "temporary": false }
+          ]
+        },
+        {
+          "id": "22222222-0000-0000-0000-000000000004",
+          "username": "reader@rangueil.fr",
+          "email": "reader@rangueil.fr",
+          "firstName": "Reader",
+          "lastName": "Rangueil",
+          "enabled": true,
+          "emailVerified": true,
+          "realmRoles": ["VIEWER"],
+          "attributes": {
+            "establishment_id": ["11111111-0000-0000-0000-000000000003"]
+          },
+          "credentials": [
+            { "type": "password", "value": "qualidoc123", "temporary": false }
+          ]
+        }
+      ]
+    }

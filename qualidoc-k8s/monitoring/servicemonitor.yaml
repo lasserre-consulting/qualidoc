@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: qualidoc-backend-monitor
+  namespace: qualidoc
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: qualidoc-backend
+  endpoints:
+    - port: "8080"
+      path: /actuator/prometheus
+      interval: 30s

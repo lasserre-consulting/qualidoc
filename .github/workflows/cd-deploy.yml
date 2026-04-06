@@ -1,0 +1,46 @@
+name: CD — Déploiement Kubernetes
+
+on:
+  workflow_run:
+    workflows: ["CI — Backend Kotlin", "CI — Frontend Angular"]
+    branches: [main]
+    types: [completed]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    environment:
+      name: production
+      url: https://qualidoc.fr
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-kubectl@v3
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+      - name: Tag image
+        id: tag
+        run: echo "sha=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+      - name: Deploy backend
+        run: |
+          kubectl set image deployment/qualidoc-backend \
+            backend=ghcr.io/${{ github.repository_owner }}/qualidoc-backend:${{ steps.tag.outputs.sha }} \
+            -n qualidoc
+          kubectl rollout status deployment/qualidoc-backend -n qualidoc --timeout=300s
+      - name: Deploy frontend
+        run: |
+          kubectl set image deployment/qualidoc-frontend \
+            frontend=ghcr.io/${{ github.repository_owner }}/qualidoc-frontend:${{ steps.tag.outputs.sha }} \
+            -n qualidoc
+          kubectl rollout status deployment/qualidoc-frontend -n qualidoc --timeout=120s
+      - name: Rollback si échec
+        if: failure()
+        run: |
+          kubectl rollout undo deployment/qualidoc-backend -n qualidoc
+          kubectl rollout undo deployment/qualidoc-frontend -n qualidoc

@@ -1,0 +1,30 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: qualidoc
+
+resources:
+  - cert-manager/cluster-issuer.yaml
+  - namespace/namespace.yaml
+  - config/configmap.yaml
+  - config/secrets.yaml
+  - postgres/statefulset.yaml
+  - postgres/service.yaml
+  - postgres/pvc.yaml
+  - minio/statefulset.yaml
+  - minio/service.yaml
+  - minio/pvc.yaml
+  - elasticsearch/statefulset.yaml
+  - elasticsearch/service.yaml
+  - elasticsearch/pvc.yaml
+  - keycloak/theme-configmap.yaml
+  - keycloak/realm-configmap.yaml
+  - keycloak/deployment.yaml
+  - keycloak/service.yaml
+  - backend/deployment.yaml
+  - backend/service.yaml
+  - backend/hpa.yaml
+  - frontend/deployment.yaml
+  - frontend/service.yaml
+  - ingress/ingress.yaml
+  # - monitoring/servicemonitor.yaml  # Nécessite Prometheus Operator (CRD)

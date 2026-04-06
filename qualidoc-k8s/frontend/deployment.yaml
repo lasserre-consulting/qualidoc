@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qualidoc-frontend
+  namespace: qualidoc
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: qualidoc-frontend
+  template:
+    metadata:
+      labels:
+        app: qualidoc-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: localhost:5000/qualidoc-frontend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "128Mi"
+              cpu: "200m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  namespace: qualidoc
+spec:
+  selector:
+    app: qualidoc-frontend
+  ports:
+    - port: 80
+      targetPort: 80

@@ -1,0 +1,41 @@
+@use '@angular/material' as mat;
+
+// Initialisation des styles de base Material
+@include mat.core();
+
+// Thème QualiDoc — bleu médical (API M3, Angular Material 18+)
+$qualidoc-theme: mat.define-theme((
+  color: (
+    theme-type: light,
+    primary: mat.$azure-palette,
+  ),
+  typography: (
+    brand-family: 'Roboto',
+    plain-family: 'Roboto',
+  ),
+  density: (scale: 0),
+));
+
+html {
+  @include mat.all-component-themes($qualidoc-theme);
+  color-scheme: light;
+}
+
+// Reset et base
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  background: #f5f5f5;
+}
+
+// Scrollbar discrète
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #aaa; }
+
+// Utilitaires
+.mat-elevation-z2 { box-shadow: 0 2px 4px rgba(0,0,0,.08) !important; }

@@ -83,11 +83,11 @@ interface FolderNode {
     .folder-row.selected { background: #e3f2fd; }
     .folder-icon { font-size: 18px; width: 18px; height: 18px; color: #1565C0; flex-shrink: 0; }
     .folder-name { flex: 1; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .expand-btn { width: 20px; height: 20px; line-height: 20px; flex-shrink: 0; }
+    .expand-btn { height: 30px; line-height: 20px; flex-shrink: 0; }
     .expand-btn mat-icon { font-size: 16px; }
     .expand-spacer { width: 20px; flex-shrink: 0; }
     .folder-actions { display: none; align-items: center; }
-    .folder-actions button { width: 24px; height: 24px; line-height: 24px; }
+    .folder-actions button { height: 30px; line-height: 24px; }
     .folder-actions mat-icon { font-size: 14px; }
     .folder-row:hover .folder-actions { display: flex; }
   `]

@@ -18,6 +18,10 @@
         "https://www.lasserre-consulting.fr/qualidoc/*",
         "http://localhost:4200/*"
       ],
+      "postLogoutRedirectUris": [
+        "https://www.lasserre-consulting.fr/qualidoc/*",
+        "http://localhost:4200/*"
+      ],
       "webOrigins": [
         "https://www.lasserre-consulting.fr",
         "http://localhost:4200"

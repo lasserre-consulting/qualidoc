@@ -160,7 +160,7 @@ export class AuthEffects {
     this.actions$.pipe(
       ofType(AuthActions.logout),
       switchMap(async () => {
-        await this.keycloak.logout(window.location.origin);
+        await this.keycloak.logout(window.location.href);
         return { type: '[Auth] Logout Complete' };
       })
     )

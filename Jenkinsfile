@@ -41,7 +41,7 @@ pipeline {
         stage('Backend - Build & Deploy') {
             steps {
                 dir("${PROJECT_DIR}") {
-                    sh 'docker compose -f docker-compose.prod.yml up -d --build backend'
+                    sh 'docker compose --env-file /etc/qualidoc/secrets.env -f docker-compose.prod.yml up -d --build backend'
                 }
             }
         }

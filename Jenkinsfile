@@ -27,7 +27,13 @@ pipeline {
 
         stage('Frontend - Deploy') {
             steps {
-                sh "rm -rf ${WWW_DIR}/*"
+                sh '''
+                    if [ -z "${WWW_DIR}" ] || [ ! -d "${WWW_DIR}" ]; then
+                        echo "WWW_DIR invalide ou absent : ${WWW_DIR}"
+                        exit 1
+                    fi
+                    rm -rf "${WWW_DIR:?}/"*
+                '''
                 sh "cp -r ${PROJECT_DIR}/qualidoc-frontend/dist/qualidoc-frontend/browser/* ${WWW_DIR}/"
             }
         }

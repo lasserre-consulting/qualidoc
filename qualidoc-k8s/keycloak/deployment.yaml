@@ -29,9 +29,18 @@ spec:
             - name: keycloak-theme-dir
               mountPath: /theme-out
 
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
       containers:
         - name: keycloak
           image: quay.io/keycloak/keycloak:26.5.7
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
           args: ["start", "--health-enabled=true", "--hostname=https://keycloak.qualidoc.fr", "--proxy-headers=xforwarded", "--http-enabled=true", "--import-realm"]
           ports:
             - containerPort: 8180

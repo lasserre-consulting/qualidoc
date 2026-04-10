@@ -78,8 +78,6 @@ class GlobalExceptionHandler {
         return ProblemDetail.forStatusAndDetail(
             HttpStatus.INTERNAL_SERVER_ERROR,
             "Une erreur inattendue est survenue"
-        ).also {
-            it.setProperty("debug", ex.message)
-        }
+        )
     }
 }

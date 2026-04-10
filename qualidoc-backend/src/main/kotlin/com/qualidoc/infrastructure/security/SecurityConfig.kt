@@ -73,7 +73,7 @@ class SecurityConfig {
         val config = CorsConfiguration().apply {
             allowedOriginPatterns = listOf("http://localhost:4200", "https://www.lasserre-consulting.fr")
             allowedMethods = listOf("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
-            allowedHeaders = listOf("*")
+            allowedHeaders = listOf("Content-Type", "Authorization", "X-Requested-With")
             allowCredentials = true
         }
         return UrlBasedCorsConfigurationSource().apply {

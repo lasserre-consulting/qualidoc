@@ -200,7 +200,7 @@ class FolderController(
     ): ResponseEntity<FolderDto> {
         val name = body["name"]?.takeIf { it.isNotBlank() }
             ?: return ResponseEntity.badRequest().build()
-        return ResponseEntity.ok(renameFolderUseCase.execute(folderId, name))
+        return ResponseEntity.ok(renameFolderUseCase.execute(folderId, name, jwt.userId()))
     }
 
     @DeleteMapping("/{folderId}")
@@ -209,7 +209,7 @@ class FolderController(
         @PathVariable folderId: UUID,
         @AuthenticationPrincipal jwt: Jwt
     ): ResponseEntity<Void> {
-        deleteFolderUseCase.execute(folderId)
+        deleteFolderUseCase.execute(folderId, jwt.userId())
         return ResponseEntity.noContent().build()
     }
 }

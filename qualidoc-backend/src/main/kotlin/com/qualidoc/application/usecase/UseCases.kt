@@ -337,11 +337,20 @@ class CreateFolderUseCase(
 
 @Service
 class RenameFolderUseCase(
-    private val folderRepository: FolderRepository
+    private val folderRepository: FolderRepository,
+    private val userRepository: UserRepository,
+    private val establishmentRepository: EstablishmentRepository
 ) {
-    fun execute(folderId: UUID, newName: String): FolderDto {
+    fun execute(folderId: UUID, newName: String, requestingUserId: UUID): FolderDto {
         val folder = folderRepository.findById(folderId)
             ?: throw IllegalArgumentException("Dossier introuvable : $folderId")
+        val user = userRepository.findById(requestingUserId)
+            ?: throw IllegalArgumentException("Utilisateur introuvable")
+        val establishment = establishmentRepository.findById(user.establishmentId)
+            ?: throw IllegalArgumentException("Établissement introuvable")
+        check(folder.groupementId == establishment.groupementId) {
+            "L'utilisateur ne peut renommer que les dossiers de son groupement."
+        }
         return folderRepository.save(folder.copy(name = newName)).toDto()
     }
 }
@@ -351,14 +360,23 @@ class DeleteFolderUseCase(
     private val folderRepository: FolderRepository,
     private val documentRepository: DocumentRepository,
     private val storagePort: StoragePort,
-    private val searchPort: SearchPort
+    private val searchPort: SearchPort,
+    private val userRepository: UserRepository,
+    private val establishmentRepository: EstablishmentRepository
 ) {
     @Transactional
-    fun execute(folderId: UUID) {
-        val allFolders = folderRepository.findByGroupementId(
-            folderRepository.findById(folderId)?.groupementId
-                ?: throw IllegalArgumentException("Dossier introuvable : $folderId")
-        )
+    fun execute(folderId: UUID, requestingUserId: UUID) {
+        val folder = folderRepository.findById(folderId)
+            ?: throw IllegalArgumentException("Dossier introuvable : $folderId")
+        val user = userRepository.findById(requestingUserId)
+            ?: throw IllegalArgumentException("Utilisateur introuvable")
+        val establishment = establishmentRepository.findById(user.establishmentId)
+            ?: throw IllegalArgumentException("Établissement introuvable")
+        check(folder.groupementId == establishment.groupementId) {
+            "L'utilisateur ne peut supprimer que les dossiers de son groupement."
+        }
+
+        val allFolders = folderRepository.findByGroupementId(folder.groupementId)
 
         // Collecte récursive de tous les IDs de dossiers à supprimer
         val toDelete = mutableSetOf<UUID>()

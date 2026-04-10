@@ -10,6 +10,8 @@ import java.io.InputStream
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
+private val ALLOWED_EXTENSIONS = setOf("pdf", "png", "jpg", "jpeg", "gif", "webp", "doc", "docx", "xls", "xlsx", "odt", "ods")
+
 @Component
 class MinioStorageAdapter(
     private val minioClient: MinioClient,
@@ -28,7 +30,8 @@ class MinioStorageAdapter(
     ): String {
         ensureBucketExists()
 
-        val extension = filename.substringAfterLast(".", "bin")
+        val extension = filename.substringAfterLast(".", "bin").lowercase()
+        require(extension in ALLOWED_EXTENSIONS) { "Type de fichier non autorisé : $extension" }
         val storageKey = "$establishmentId/$documentType/${UUID.randomUUID()}.$extension"
 
         minioClient.putObject(

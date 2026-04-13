@@ -41,7 +41,6 @@ qualidoc-k8s/
 ├── postgres/                   ← StatefulSet + PVC 10 Go
 ├── minio/                      ← StatefulSet + PVC 50 Go
 ├── elasticsearch/              ← StatefulSet + PVC 20 Go
-├── keycloak/                   ← Deployment
 ├── backend/                    ← Deployment + HPA (2→8 replicas)
 ├── frontend/                   ← Deployment (2 replicas)
 ├── ingress/                    ← Routing HTTP/HTTPS
@@ -159,9 +158,6 @@ kubectl port-forward svc/backend-service 8080:8080 -n qualidoc
 # Exposer le frontend localement
 kubectl port-forward svc/frontend-service 4200:80 -n qualidoc
 
-# Exposer Keycloak localement
-kubectl port-forward svc/keycloak-service 8180:8180 -n qualidoc
-
 # Ouvrir le dashboard Kubernetes
 minikube dashboard
 ```
@@ -184,7 +180,6 @@ Ne jamais committer `secrets.yaml` avec de vraies valeurs. Options recommandées
 | PostgreSQL | 256 Mi | 250m | 10 Gi |
 | MinIO | 256 Mi | 250m | 50 Gi |
 | Elasticsearch | 1 Gi | 500m | 20 Gi |
-| Keycloak | 512 Mi | 500m | — |
 | Backend (×2) | 512 Mi | 500m | — |
 | Frontend (×2) | 64 Mi | 100m | — |
-| **Total** | **~3.5 Gi** | **~3 CPU** | **80 Gi** |
+| **Total** | **~3 Gi** | **~2.5 CPU** | **80 Gi** |

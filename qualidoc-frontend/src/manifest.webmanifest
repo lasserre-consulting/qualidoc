@@ -1,0 +1,23 @@
+{
+  "name": "QualiDoc",
+  "short_name": "QualiDoc",
+  "description": "Plateforme de gestion documentaire qualité",
+  "start_url": "/qualidoc/",
+  "scope": "/qualidoc/",
+  "display": "standalone",
+  "background_color": "#1565C0",
+  "theme_color": "#1565C0",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "assets/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/favicon.ico",
+      "sizes": "16x16 32x32",
+      "type": "image/x-icon"
+    }
+  ]
+}

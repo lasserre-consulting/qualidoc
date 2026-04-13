@@ -1,6 +1,6 @@
 # QualiDoc — Frontend Angular
 
-Interface SPA Angular 21 avec Angular Material, NgRx et authentification Keycloak.
+Interface SPA Angular 21 avec Angular Material, NgRx et authentification JWT custom.
 
 ## Stack technique
 
@@ -8,79 +8,167 @@ Interface SPA Angular 21 avec Angular Material, NgRx et authentification Keycloa
 |---|---|
 | Framework | Angular 21 (standalone components) |
 | UI | Angular Material 21 |
-| État | NgRx 21 (Store + Effects + DevTools) |
-| Auth | Keycloak Angular + keycloak-js 25 |
+| Etat | NgRx 21 (Store + Effects + DevTools) |
+| Auth | JWT custom (AuthService + TokenStorageService + AuthInterceptor) |
 | Build | Angular CLI + esbuild |
 | Style | SCSS + Material theming |
 
-## Structure
+## Architecture feature-based
 
 ```
 src/app/
 ├── core/
-│   ├── models/models.ts          ← Interfaces TypeScript du domaine
-│   ├── services/services.ts      ← Services HTTP (DocumentService, SearchService…)
-│   ├── interceptors/             ← Injection JWT automatique
-│   └── guards/                   ← authGuard, editorGuard
+│   ├── models/models.ts             ← Interfaces TypeScript du domaine
+│   ├── services/
+│   │   ├── auth.service.ts          ← Login, refresh, logout, decodage JWT
+│   │   ├── token-storage.service.ts ← Stockage access/refresh tokens (localStorage)
+│   │   └── ...                      ← DocumentService, SearchService, etc.
+│   ├── interceptors/
+│   │   └── auth.interceptor.ts      ← Injection Bearer + refresh automatique sur 401
+│   └── guards/                      ← authGuard, editorGuard
 ├── store/
-│   ├── documents/documents.store.ts  ← Actions + Reducer + Effects + Selectors
-│   └── shared.store.ts               ← Auth + Search + Establishments
+│   ├── documents/documents.store.ts ← Actions + Reducer + Effects + Selectors
+│   └── shared.store.ts              ← Auth + Search + Establishments
 ├── features/
-│   ├── dashboard/pages/          ← Tableau de bord (stats + documents récents)
-│   ├── documents/pages/          ← Liste + Upload + Dialog partage
-│   ├── search/pages/             ← Recherche full-text
-│   └── admin/pages/              ← Établissements + métriques
-└── shared/components/            ← ForbiddenComponent
+│   ├── auth/                        ← Page de login
+│   ├── dashboard/pages/             ← Tableau de bord (stats + documents recents)
+│   ├── documents/pages/             ← Liste + Upload + Dialog partage
+│   ├── search/pages/                ← Recherche full-text
+│   └── admin/pages/                 ← Gestion utilisateurs + metriques
+└── shared/components/               ← ForbiddenComponent
 ```
 
-## Démarrage rapide
+## Flux d'authentification
 
-```bash
-# Installation des dépendances
-npm install
-
-# Lancement en développement (proxy vers backend :8080)
-npm start
-# → http://localhost:4200
-
-# Build de production
-npm run build:prod
-# → dist/qualidoc-frontend/
+```
+┌──────────┐    POST /auth/login     ┌──────────┐
+│  Login   │ ──────────────────────→ │ Backend  │
+│  Page    │ ←────────────────────── │  API     │
+└──────────┘  { accessToken,         └──────────┘
+              refreshToken }
+      │
+      ▼
+┌──────────────────┐
+│ TokenStorageService │  → localStorage
+└──────────────────┘
+      │
+      ▼
+┌──────────────────┐     Authorization: Bearer <token>
+│ AuthInterceptor  │ ──────────────────────────────────→ API
+└──────────────────┘
+      │
+      │ Si 401 recu :
+      ▼
+┌──────────────────┐    POST /auth/refresh
+│ AuthService      │ ──────────────────────────────────→ API
+│ .refresh()       │ ←──────────────────────────────────
+└──────────────────┘  Nouveau couple access/refresh
+      │
+      │ Si refresh echoue :
+      ▼
+  Redirection → /login
 ```
 
-## Prérequis
+### Detail du flux
 
-Le backend Spring Boot doit tourner sur `:8080` et Keycloak sur `:8180`.
+1. L'utilisateur saisit email + mot de passe sur la page `/login`
+2. `AuthService.login()` appelle `POST /auth/login` et stocke les tokens via `TokenStorageService`
+3. `AuthInterceptor` injecte automatiquement le header `Authorization: Bearer <accessToken>` sur chaque requete (sauf `/auth/login` et `/auth/refresh`)
+4. Sur une reponse 401, l'intercepteur tente un refresh automatique via `POST /auth/refresh`
+5. Pendant le refresh, les autres requetes en cours sont mises en file d'attente et reprises une fois le nouveau token obtenu
+6. Si le refresh echoue, les tokens sont effaces et l'utilisateur est redirige vers `/login`
 
-```bash
-# Démarrer la stack (depuis qualidoc-backend/)
-docker-compose up -d
+## Roles
 
-# Démarrer le backend
-cd qualidoc-backend && ./gradlew bootRun
+| Role | Permissions |
+|---|---|
+| **EDITOR** | Lire, telecharger, uploader, deplacer, renommer, supprimer des documents. Creer/renommer/supprimer des dossiers. Gerer les utilisateurs (admin). |
+| **READER** | Lire et telecharger des documents. Recherche full-text. Consultation du tableau de bord. |
 
-# Démarrer le frontend
-cd qualidoc-frontend && npm start
+Les guards Angular (`authGuard`, `editorGuard`) protegent les routes cote frontend. Le backend applique egalement les restrictions par role.
+
+## State management NgRx
+
+Le store NgRx est organise en deux slices :
+
+### `documents` (documents.store.ts)
+- **Actions** : chargement, upload, deplacement, renommage, suppression de documents
+- **Reducer** : etat de la liste (documents, loading, error)
+- **Effects** : appels HTTP vers l'API backend
+- **Selectors** : acces reactif aux documents, etat de chargement
+
+### `shared` (shared.store.ts)
+- Auth : utilisateur connecte, etat d'authentification
+- Search : resultats de recherche, query
+- Establishments : liste des etablissements
+
+En developpement, l'extension **Redux DevTools** permet de visualiser le store et rejouer les actions.
+
+## Configuration
+
+### environment.ts (dev)
+
+```typescript
+export const environment = {
+  production: false,
+  apiUrl: '/qualidoc/api/v1',
+};
 ```
 
-## Configuration Keycloak
+### environment.prod.ts (production)
 
-Dans Keycloak (`http://localhost:8180`) :
-1. Créer le realm `qualidoc`
-2. Créer un client `qualidoc-frontend` (public, redirect URI : `http://localhost:4200/*`)
-3. Créer les rôles de realm : `READER`, `EDITOR`
-4. Ajouter le mapper `establishment_id` dans le token JWT
+```typescript
+export const environment = {
+  production: true,
+  apiUrl: '/qualidoc/api/v1',
+};
+```
+
+L'`apiUrl` utilise le prefixe `/qualidoc/` car l'application est deployee sous ce sous-chemin via Nginx.
 
 ## Pages disponibles
 
-| Route | Rôle | Description |
+| Route | Role | Description |
 |---|---|---|
+| `/login` | Public | Page de connexion |
 | `/dashboard` | READER, EDITOR | Tableau de bord avec stats |
-| `/documents` | READER, EDITOR | Liste et téléchargement |
+| `/documents` | READER, EDITOR | Liste et telechargement |
 | `/documents/upload` | EDITOR | Upload avec drag & drop |
 | `/search` | READER, EDITOR | Recherche full-text |
-| `/admin` | EDITOR | Établissements + métriques |
+| `/admin` | EDITOR | Gestion utilisateurs + metriques |
+
+## Commandes de developpement
+
+### Prerequis
+
+Le backend Spring Boot doit tourner (port 8083) et la stack Docker (PostgreSQL, MinIO, ES) doit etre lancee.
+
+### Installation et lancement
+
+```bash
+# Installation des dependances
+npm install
+
+# Lancement en developpement
+npm start
+```
+
+Accessible via `http://localhost/qualidoc/` (via Nginx local qui proxifie vers le serveur de dev Angular).
+
+### Tests
+
+```bash
+npm test
+```
+
+### Build de production
+
+```bash
+npm run build -- --configuration production
+```
+
+Les fichiers compiles sont generes dans `dist/qualidoc-frontend/browser/`.
 
 ## NgRx DevTools
 
-En développement, ouvre l'extension Redux DevTools dans Chrome/Firefox pour visualiser le store en temps réel et rejouer les actions.
+En developpement, ouvrir l'extension Redux DevTools dans Chrome/Firefox pour visualiser le store en temps reel et rejouer les actions.

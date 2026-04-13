@@ -1,11 +1,12 @@
 package com.qualidoc.presentation
 
 import com.ninjasquad.springmockk.MockkBean
+import com.qualidoc.TestFixtures
 import com.qualidoc.TestSecurityConfig
-import com.qualidoc.domain.model.Establishment
+import com.qualidoc.application.dto.EstablishmentDto
+import com.qualidoc.application.usecase.ListActiveEstablishmentsUseCase
 import com.qualidoc.domain.model.User
 import com.qualidoc.domain.model.UserRole
-import com.qualidoc.domain.repository.EstablishmentRepository
 import com.qualidoc.infrastructure.security.JwtService
 import com.qualidoc.infrastructure.security.SecurityConfig
 import com.qualidoc.presentation.controller.EstablishmentController
@@ -32,7 +33,7 @@ class EstablishmentControllerTest {
     lateinit var jwtService: JwtService
 
     @MockkBean
-    lateinit var establishmentRepository: EstablishmentRepository
+    lateinit var listActiveEstablishmentsUseCase: ListActiveEstablishmentsUseCase
 
     private fun token(): String = jwtService.generateAccessToken(
         User(id = UUID.randomUUID(), establishmentId = UUID.randomUUID(), email = "test@test.com",
@@ -41,9 +42,10 @@ class EstablishmentControllerTest {
 
     @Test
     fun `GET establishments retourne la liste des etablissements actifs`() {
-        val active = Establishment(id = UUID.randomUUID(), name = "Clinique Nord", code = "CLN", active = true)
-        val inactive = Establishment(id = UUID.randomUUID(), name = "Clinique Sud", code = "CLS", active = false)
-        every { establishmentRepository.findAll() } returns listOf(active, inactive)
+        val activeEstablishment = EstablishmentDto(
+            id = UUID.randomUUID(), name = "Clinique Nord", code = "CLN", active = true
+        )
+        every { listActiveEstablishmentsUseCase.execute() } returns listOf(activeEstablishment)
 
         mockMvc.get("/api/v1/establishments") {
             header("Authorization", "Bearer ${token()}")
@@ -58,10 +60,8 @@ class EstablishmentControllerTest {
     }
 
     @Test
-    fun `GET establishments filtre les etablissements inactifs`() {
-        every { establishmentRepository.findAll() } returns listOf(
-            Establishment(id = UUID.randomUUID(), name = "Fermé", code = "FRM", active = false)
-        )
+    fun `GET establishments retourne liste vide quand aucun actif`() {
+        every { listActiveEstablishmentsUseCase.execute() } returns emptyList()
 
         mockMvc.get("/api/v1/establishments") {
             header("Authorization", "Bearer ${token()}")

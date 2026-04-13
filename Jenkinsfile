@@ -16,10 +16,31 @@ pipeline {
             }
         }
 
-        stage('Frontend - Build') {
+        stage('Backend - Test') {
+            steps {
+                dir("${PROJECT_DIR}/qualidoc-backend") {
+                    sh './gradlew test --no-daemon'
+                }
+            }
+            post {
+                always {
+                    junit "${PROJECT_DIR}/qualidoc-backend/build/test-results/test/*.xml"
+                }
+            }
+        }
+
+        stage('Frontend - Test') {
             steps {
                 dir("${PROJECT_DIR}/qualidoc-frontend") {
                     sh 'npm ci'
+                    sh 'npx ng test --watch=false --browsers=ChromeHeadless'
+                }
+            }
+        }
+
+        stage('Frontend - Build') {
+            steps {
+                dir("${PROJECT_DIR}/qualidoc-frontend") {
                     sh 'npm run build -- --configuration production'
                 }
             }

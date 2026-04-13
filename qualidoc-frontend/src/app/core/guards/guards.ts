@@ -1,37 +1,21 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { KeycloakAuthGuard, KeycloakService } from 'keycloak-angular';
+import { AuthService } from '../services/auth.service';
 
 // ── Guard authentification (toutes les routes protégées) ──────────────────────
 
-export const authGuard: CanActivateFn = async () => {
-  const keycloak = inject(KeycloakService);
+export const authGuard: CanActivateFn = () => {
+  const authService = inject(AuthService);
   const router = inject(Router);
-
-  const isLoggedIn = await keycloak.isLoggedIn();
-  if (!isLoggedIn) {
-    await keycloak.login({ redirectUri: window.location.href });
-    return false;
-  }
-  return true;
+  if (authService.isLoggedIn()) return true;
+  return router.createUrlTree(['/login']);
 };
 
-// ── Guard éditeur (upload, partage) ──────────────────────────────────────────
+// ── Guard éditeur (upload, partage, admin) ───────────────────────────────────
 
-export const editorGuard: CanActivateFn = async () => {
-  const keycloak = inject(KeycloakService);
+export const editorGuard: CanActivateFn = () => {
+  const authService = inject(AuthService);
   const router = inject(Router);
-
-  const isLoggedIn = await keycloak.isLoggedIn();
-  if (!isLoggedIn) {
-    await keycloak.login({ redirectUri: window.location.href });
-    return false;
-  }
-
-  const hasRole = keycloak.isUserInRole('EDITOR');
-  if (!hasRole) {
-    router.navigate(['/forbidden']);
-    return false;
-  }
-  return true;
+  if (authService.isEditor()) return true;
+  return router.createUrlTree(['/forbidden']);
 };

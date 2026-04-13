@@ -21,9 +21,39 @@ export type UserRole = 'READER' | 'EDITOR';
 export interface User {
   id: string;
   email: string;
+  firstName: string;
+  lastName: string;
   fullName: string;
   role: UserRole;
   establishmentId: string;
+}
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: User;
+}
+
+export interface CreateUserRequest {
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: 'READER' | 'EDITOR';
+  establishmentId: string;
+  password: string;
+}
+
+export interface UpdateUserRequest {
+  firstName?: string;
+  lastName?: string;
+  role?: 'READER' | 'EDITOR';
+  active?: boolean;
 }
 
 // ── Document ──────────────────────────────────────────────────────────────────

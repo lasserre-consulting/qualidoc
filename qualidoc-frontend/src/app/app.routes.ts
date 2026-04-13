@@ -3,6 +3,11 @@ import { authGuard, editorGuard } from './core/guards/guards';
 
 export const routes: Routes = [
   {
+    path: 'login',
+    loadComponent: () =>
+      import('./features/auth/pages/login.page').then(m => m.LoginPageComponent)
+  },
+  {
     path: '',
     redirectTo: 'dashboard',
     pathMatch: 'full'

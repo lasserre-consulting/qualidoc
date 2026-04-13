@@ -1,13 +1,14 @@
 import { createAction, createReducer, createSelector, props, on } from '@ngrx/store';
 import { inject } from '@angular/core';
 import { Actions, ofType, createEffect } from '@ngrx/effects';
-import { switchMap, map, catchError, of, debounceTime, distinctUntilChanged, filter } from 'rxjs';
+import { switchMap, map, catchError, of, debounceTime, distinctUntilChanged, filter, tap } from 'rxjs';
+import { Router } from '@angular/router';
 import {
   SearchState, EstablishmentsState, AuthState,
   SearchResult, Establishment, User
 } from '../core/models/models';
 import { SearchService, EstablishmentService } from '../core/services/services';
-import { KeycloakService } from 'keycloak-angular';
+import { AuthService } from '../core/services/auth.service';
 
 // ══════════════════════════════════════════════════════════════════════════════
 // SEARCH
@@ -131,27 +132,19 @@ export const AuthSelectors = {
 };
 
 export class AuthEffects {
-  private actions$ = inject(Actions);
-  private keycloak = inject(KeycloakService);
+  private actions$    = inject(Actions);
+  private authService = inject(AuthService);
+  private router      = inject(Router);
 
   loadProfile$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthActions.loadProfile),
-      switchMap(async () => {
-        try {
-          const token = this.keycloak.getKeycloakInstance().tokenParsed as any;
-          const roles = this.keycloak.getUserRoles();
-          const user: User = {
-            id: token?.sub || '',
-            email: token?.email || '',
-            fullName: `${token?.given_name || ''} ${token?.family_name || ''}`.trim(),
-            role: roles.includes('EDITOR') ? 'EDITOR' : 'READER',
-            establishmentId: token?.establishment_id || ''
-          };
+      map(() => {
+        const user = this.authService.getCurrentUser();
+        if (user) {
           return AuthActions.loadProfileSuccess({ user });
-        } catch (err: any) {
-          return AuthActions.loadProfileFailure({ error: err.message });
         }
+        return AuthActions.loadProfileFailure({ error: 'Aucun token valide' });
       })
     )
   );
@@ -159,10 +152,13 @@ export class AuthEffects {
   logout$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthActions.logout),
-      switchMap(async () => {
-        await this.keycloak.logout(window.location.href);
-        return { type: '[Auth] Logout Complete' };
-      })
-    )
+      switchMap(() =>
+        this.authService.logout().pipe(
+          catchError(() => of(undefined))
+        )
+      ),
+      tap(() => this.router.navigate(['/login'])),
+    ),
+    { dispatch: false }
   );
 }

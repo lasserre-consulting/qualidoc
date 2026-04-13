@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { AsyncPipe, NgIf } from '@angular/common';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -10,6 +10,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { AuthActions, AuthSelectors } from './store/shared.store';
+import { AuthService } from './core/services/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -20,54 +21,61 @@ import { AuthActions, AuthSelectors } from './store/shared.store';
     MatIconModule, MatButtonModule, MatBadgeModule, MatTooltipModule,
   ],
   template: `
-    <mat-sidenav-container class="sidenav-container">
+    <!-- Login page: pas de sidenav -->
+    <ng-container *ngIf="isLoginPage(); else appLayout">
+      <router-outlet />
+    </ng-container>
 
-      <!-- Sidebar navigation -->
-      <mat-sidenav mode="side" opened class="sidenav">
-        <div class="sidenav-header">
-          <div class="logo-svg" aria-label="QualiDoc"></div>
-          <span class="logo-sub">Plateforme qualité</span>
-        </div>
+    <ng-template #appLayout>
+      <mat-sidenav-container class="sidenav-container">
 
-        <mat-nav-list>
-          <a mat-list-item routerLink="/dashboard" routerLinkActive="active-link">
-            <mat-icon matListItemIcon>dashboard</mat-icon>
-            <span matListItemTitle>Tableau de bord</span>
-          </a>
-          <a mat-list-item routerLink="/documents" routerLinkActive="active-link">
-            <mat-icon matListItemIcon>folder_open</mat-icon>
-            <span matListItemTitle>Documents</span>
-          </a>
-          <a mat-list-item routerLink="/search" routerLinkActive="active-link">
-            <mat-icon matListItemIcon>search</mat-icon>
-            <span matListItemTitle>Recherche</span>
-          </a>
-          <a mat-list-item routerLink="/admin" routerLinkActive="active-link"
-             *ngIf="isEditor$ | async">
-            <mat-icon matListItemIcon>admin_panel_settings</mat-icon>
-            <span matListItemTitle>Administration</span>
-          </a>
-        </mat-nav-list>
-
-        <!-- User info en bas -->
-        <div class="sidenav-footer" *ngIf="user$ | async as user">
-          <mat-icon>account_circle</mat-icon>
-          <div class="user-info">
-            <span class="user-name">{{ user.fullName }}</span>
-            <span class="user-role">{{ user.role === 'EDITOR' ? 'Éditeur' : 'Lecteur' }}</span>
+        <!-- Sidebar navigation -->
+        <mat-sidenav mode="side" opened class="sidenav">
+          <div class="sidenav-header">
+            <div class="logo-svg" aria-label="QualiDoc"></div>
+            <span class="logo-sub">Plateforme qualité</span>
           </div>
-          <button mat-icon-button (click)="logout()" matTooltip="Déconnexion">
-            <mat-icon>logout</mat-icon>
-          </button>
-        </div>
-      </mat-sidenav>
 
-      <!-- Contenu principal -->
-      <mat-sidenav-content class="main-content">
-        <router-outlet />
-      </mat-sidenav-content>
+          <mat-nav-list>
+            <a mat-list-item routerLink="/dashboard" routerLinkActive="active-link">
+              <mat-icon matListItemIcon>dashboard</mat-icon>
+              <span matListItemTitle>Tableau de bord</span>
+            </a>
+            <a mat-list-item routerLink="/documents" routerLinkActive="active-link">
+              <mat-icon matListItemIcon>folder_open</mat-icon>
+              <span matListItemTitle>Documents</span>
+            </a>
+            <a mat-list-item routerLink="/search" routerLinkActive="active-link">
+              <mat-icon matListItemIcon>search</mat-icon>
+              <span matListItemTitle>Recherche</span>
+            </a>
+            <a mat-list-item routerLink="/admin" routerLinkActive="active-link"
+               *ngIf="isEditor$ | async">
+              <mat-icon matListItemIcon>admin_panel_settings</mat-icon>
+              <span matListItemTitle>Administration</span>
+            </a>
+          </mat-nav-list>
 
-    </mat-sidenav-container>
+          <!-- User info en bas -->
+          <div class="sidenav-footer" *ngIf="user$ | async as user">
+            <mat-icon>account_circle</mat-icon>
+            <div class="user-info">
+              <span class="user-name">{{ user.fullName }}</span>
+              <span class="user-role">{{ user.role === 'EDITOR' ? 'Éditeur' : 'Lecteur' }}</span>
+            </div>
+            <button mat-icon-button (click)="logout()" matTooltip="Déconnexion">
+              <mat-icon>logout</mat-icon>
+            </button>
+          </div>
+        </mat-sidenav>
+
+        <!-- Contenu principal -->
+        <mat-sidenav-content class="main-content">
+          <router-outlet />
+        </mat-sidenav-content>
+
+      </mat-sidenav-container>
+    </ng-template>
   `,
   styles: [`
     .sidenav-container { height: 100vh; }
@@ -95,13 +103,21 @@ import { AuthActions, AuthSelectors } from './store/shared.store';
   `]
 })
 export class AppComponent implements OnInit {
-  private store = inject(Store);
+  private store       = inject(Store);
+  private router      = inject(Router);
+  private authService = inject(AuthService);
 
   user$    = this.store.select(AuthSelectors.user);
   isEditor$ = this.store.select(AuthSelectors.isEditor);
 
   ngOnInit() {
-    this.store.dispatch(AuthActions.loadProfile());
+    if (this.authService.isLoggedIn()) {
+      this.store.dispatch(AuthActions.loadProfile());
+    }
+  }
+
+  isLoginPage(): boolean {
+    return this.router.url === '/login';
   }
 
   logout() {

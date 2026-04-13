@@ -4,12 +4,14 @@ import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { catchError, filter, switchMap, take } from 'rxjs';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { TokenStorageService } from '../services/token-storage.service';
 
 let isRefreshing = false;
 const refreshTokenSubject = new BehaviorSubject<string | null>(null);
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
+  const tokenStorage = inject(TokenStorageService);
   const router = inject(Router);
 
   // Ne pas intercepter les requêtes d'auth
@@ -23,10 +25,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
       if (error.status === 401) {
-        return handle401(authReq, next, authService, router);
-      }
-      if (error.status === 403) {
-        router.navigate(['/forbidden']);
+        return handle401(authReq, next, authService, tokenStorage, router);
       }
       return throwError(() => error);
     })
@@ -41,6 +40,7 @@ function handle401(
   req: HttpRequest<unknown>,
   next: HttpHandlerFn,
   authService: AuthService,
+  tokenStorage: TokenStorageService,
   router: Router
 ): Observable<any> {
   if (!isRefreshing) {
@@ -55,7 +55,7 @@ function handle401(
       }),
       catchError(err => {
         isRefreshing = false;
-        authService.clearTokens();
+        tokenStorage.clearTokens();
         router.navigate(['/login']);
         return throwError(() => err);
       })

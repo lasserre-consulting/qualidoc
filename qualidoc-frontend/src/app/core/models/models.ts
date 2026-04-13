@@ -44,7 +44,7 @@ export interface CreateUserRequest {
   email: string;
   firstName: string;
   lastName: string;
-  role: 'READER' | 'EDITOR';
+  role: UserRole;
   establishmentId: string;
   password: string;
 }
@@ -52,7 +52,7 @@ export interface CreateUserRequest {
 export interface UpdateUserRequest {
   firstName?: string;
   lastName?: string;
-  role?: 'READER' | 'EDITOR';
+  role?: UserRole;
   active?: boolean;
 }
 

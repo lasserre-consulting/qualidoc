@@ -2,51 +2,46 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { AuthResponse, User } from '../models/models';
+import { AuthResponse, User, UserRole } from '../models/models';
+import { TokenStorageService } from './token-storage.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly ACCESS_TOKEN_KEY = 'qd_access_token';
-  private readonly REFRESH_TOKEN_KEY = 'qd_refresh_token';
-
   private http = inject(HttpClient);
+  private tokenStorage = inject(TokenStorageService);
   private base = `${environment.apiUrl}/auth`;
 
   login(email: string, password: string): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.base}/login`, { email, password }).pipe(
-      tap(response => this.storeTokens(response))
+      tap(response => this.tokenStorage.storeTokens(response))
     );
   }
 
   refresh(): Observable<AuthResponse> {
-    const refreshToken = this.getRefreshToken();
+    const refreshToken = this.tokenStorage.getRefreshToken();
     return this.http.post<AuthResponse>(`${this.base}/refresh`, { refreshToken }).pipe(
-      tap(response => this.storeTokens(response))
+      tap(response => this.tokenStorage.storeTokens(response))
     );
   }
 
   logout(): Observable<void> {
-    const refreshToken = this.getRefreshToken();
-    this.clearTokens();
+    const refreshToken = this.tokenStorage.getRefreshToken();
+    this.tokenStorage.clearTokens();
     return this.http.post<void>(`${this.base}/logout`, { refreshToken });
   }
 
   getAccessToken(): string | null {
-    return localStorage.getItem(this.ACCESS_TOKEN_KEY);
-  }
-
-  getRefreshToken(): string | null {
-    return localStorage.getItem(this.REFRESH_TOKEN_KEY);
+    return this.tokenStorage.getAccessToken();
   }
 
   isLoggedIn(): boolean {
-    const token = this.getAccessToken();
+    const token = this.tokenStorage.getAccessToken();
     if (!token) return false;
     return !this.isTokenExpired(token);
   }
 
   getCurrentUser(): User | null {
-    const token = this.getAccessToken();
+    const token = this.tokenStorage.getAccessToken();
     if (!token) return null;
     try {
       const payload = this.decodeToken(token);
@@ -64,14 +59,13 @@ export class AuthService {
     }
   }
 
-  isEditor(): boolean {
+  hasRole(role: UserRole): boolean {
     const user = this.getCurrentUser();
-    return user?.role === 'EDITOR';
+    return user?.role === role;
   }
 
   clearTokens(): void {
-    localStorage.removeItem(this.ACCESS_TOKEN_KEY);
-    localStorage.removeItem(this.REFRESH_TOKEN_KEY);
+    this.tokenStorage.clearTokens();
   }
 
   private decodeToken(token: string): any {
@@ -89,10 +83,5 @@ export class AuthService {
     } catch {
       return true;
     }
-  }
-
-  private storeTokens(response: AuthResponse): void {
-    localStorage.setItem(this.ACCESS_TOKEN_KEY, response.accessToken);
-    localStorage.setItem(this.REFRESH_TOKEN_KEY, response.refreshToken);
   }
 }

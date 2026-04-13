@@ -4,7 +4,9 @@ import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/materia
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
-import { User } from '../../../core/models/models';
+interface ResetPasswordDialogData {
+  user: { firstName: string; lastName: string };
+}
 
 @Component({
   selector: 'app-reset-password-dialog',
@@ -35,7 +37,7 @@ import { User } from '../../../core/models/models';
 export class ResetPasswordDialogComponent {
   private fb  = inject(FormBuilder);
   private ref = inject(MatDialogRef<ResetPasswordDialogComponent>);
-  data        = inject<{ user: User }>(MAT_DIALOG_DATA);
+  data        = inject<ResetPasswordDialogData>(MAT_DIALOG_DATA);
 
   passwordControl = this.fb.control('', [Validators.required, Validators.minLength(8)]);
 

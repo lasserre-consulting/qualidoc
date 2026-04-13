@@ -1,4 +1,5 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Store } from '@ngrx/store';
 import { AsyncPipe, NgIf, NgFor } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
@@ -233,6 +234,7 @@ export class AdminPage implements OnInit {
   private store        = inject(Store);
   private dialog       = inject(MatDialog);
   private usersService = inject(AdminUsersService);
+  private destroyRef   = inject(DestroyRef);
 
   establishments$  = this.store.select(EstablishmentSelectors.all);
   loadingEstab$    = this.store.select(EstablishmentSelectors.loading);
@@ -247,7 +249,7 @@ export class AdminPage implements OnInit {
 
   ngOnInit() {
     this.store.dispatch(EstablishmentActions.load());
-    this.establishments$.subscribe(e => this.establishments = e);
+    this.establishments$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(e => this.establishments = e);
     this.loadUsers();
   }
 

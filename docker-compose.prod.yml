@@ -57,35 +57,6 @@ services:
       retries: 5
     restart: unless-stopped
 
-  # ── Keycloak ──────────────────────────────────────────────────────────────
-  keycloak:
-    image: quay.io/keycloak/keycloak:26.5.7
-    container_name: qualidoc-keycloak
-    command: start --import-realm
-    environment:
-      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_ADMIN_USER:-admin}
-      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_ADMIN_PASSWORD:?KC_ADMIN_PASSWORD is required}
-      KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://postgres:5432/qualidoc
-      KC_DB_USERNAME: ${DB_USER:-qualidoc}
-      KC_DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
-      KC_HTTP_PORT: 8180
-      KC_HTTP_RELATIVE_PATH: /qualidoc/auth
-      KC_HOSTNAME: ${KC_HOSTNAME:?KC_HOSTNAME is required}
-      KC_HOSTNAME_STRICT: "false"
-      KC_PROXY_HEADERS: xforwarded
-      KC_HTTP_ENABLED: "true"
-    ports:
-      - "127.0.0.1:8180:8180"
-    volumes:
-      - ./keycloak:/opt/keycloak/data/import
-    networks:
-      - qualidoc
-    depends_on:
-      postgres:
-        condition: service_healthy
-    restart: unless-stopped
-
   # ── Frontend Angular ──────────────────────────────────────────────────────
   frontend:
     build:
@@ -110,7 +81,9 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/qualidoc
       DB_USER: ${DB_USER:-qualidoc}
       DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
-      KEYCLOAK_JWK_SET_URI: http://keycloak:8180/qualidoc/auth/realms/qualidoc/protocol/openid-connect/certs
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      JWT_ACCESS_EXPIRATION: ${JWT_ACCESS_EXPIRATION:-900}
+      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-604800}
       MINIO_ENDPOINT: http://minio:9000
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:?MINIO_ACCESS_KEY is required}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:?MINIO_SECRET_KEY is required}
@@ -123,8 +96,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      keycloak:
-        condition: service_started
       minio:
         condition: service_healthy
       elasticsearch:

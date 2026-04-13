@@ -6,20 +6,14 @@ metadata:
 data:
   # Backend
   DB_URL: "jdbc:postgresql://postgres-service:5432/qualidoc"
-  KEYCLOAK_ISSUER_URI: "https://keycloak.qualidoc.fr/realms/qualidoc"
-  KEYCLOAK_JWK_SET_URI: "http://keycloak-service:8180/realms/qualidoc/protocol/openid-connect/certs"
+  JWT_ACCESS_EXPIRATION: "900"
+  JWT_REFRESH_EXPIRATION: "604800"
 
   MINIO_ENDPOINT: "http://minio-service:9000"
   MINIO_BUCKET: "qualidoc-documents"
   ELASTICSEARCH_URI: "http://elasticsearch-service:9200"
   MAIL_HOST: "smtp.qualidoc.fr"
   MAIL_PORT: "587"
-
-  # Keycloak
-  KC_DB: "postgres"
-  KC_DB_URL: "jdbc:postgresql://postgres-service:5432/qualidoc"
-  KC_HTTP_PORT: "8180"
-  KC_HOSTNAME: "keycloak.qualidoc.fr"
 
   # Elasticsearch
   discovery.type: "single-node"

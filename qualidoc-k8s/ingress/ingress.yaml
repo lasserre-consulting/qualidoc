@@ -11,7 +11,6 @@ spec:
     - hosts:
         - qualidoc.fr
         - api.qualidoc.fr
-        - keycloak.qualidoc.fr
       secretName: qualidoc-tls
   rules:
     # Frontend Angular
@@ -38,14 +37,3 @@ spec:
                 port:
                   number: 8080
 
-    # Keycloak
-    - host: keycloak.qualidoc.fr
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: keycloak-service
-                port:
-                  number: 8180

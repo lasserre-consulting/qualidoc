@@ -48,7 +48,7 @@ class OpenApiConfig {
                     .type(SecurityScheme.Type.HTTP)
                     .scheme("bearer")
                     .bearerFormat("JWT")
-                    .description("Token JWT Keycloak — realm : qualidoc")
+                    .description("Token JWT — obtenu via POST /api/v1/auth/login")
             )
         )
 }

@@ -103,7 +103,6 @@ class UploadDocumentUseCaseTest {
         title = "Procédure de test",
         type = DocumentType.PROCEDURE,
         uploaderId = uploaderId,
-        establishmentId = establishmentId,
         filename = "procedure.pdf",
         mimeType = "application/pdf",
         sizeBytes = 1024L,

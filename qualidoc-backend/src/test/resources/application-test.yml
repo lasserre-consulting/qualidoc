@@ -1,12 +1,10 @@
-spring:
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          # jwk-set-uri évite l'appel OIDC discovery au démarrage (contrairement à issuer-uri)
-          # Les tests d'intégration appellent les use cases directement, jamais via HTTP
-          jwk-set-uri: http://localhost:0/.well-known/jwks.json
+app:
+  jwt:
+    secret: test-secret-for-unit-tests-only-min-32-chars
+    access-token-expiration: 900
+    refresh-token-expiration: 604800
 
+spring:
   mail:
     host: localhost
     port: 3025

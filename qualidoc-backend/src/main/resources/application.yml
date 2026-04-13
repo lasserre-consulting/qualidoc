@@ -23,12 +23,6 @@ spring:
     baseline-on-migrate: true
     baseline-version: 0
 
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8180/realms/qualidoc/protocol/openid-connect/certs}
-
   mail:
     host: ${MAIL_HOST:localhost}
     port: ${MAIL_PORT:1025}
@@ -65,7 +59,6 @@ springdoc:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
-    oauth2-redirect-url: http://localhost:8080/swagger-ui/oauth2-redirect.html
   info:
     title: QualiDoc API
     description: API REST de gestion documentaire inter-établissements
@@ -80,6 +73,12 @@ management:
   endpoint:
     health:
       show-details: when-authorized
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:change-this-secret-in-production-min-32-chars}
+    access-token-expiration: ${JWT_ACCESS_EXPIRATION:900}
+    refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:604800}
 
 server:
   port: 8080

@@ -5,6 +5,8 @@ import com.qualidoc.domain.repository.*
 import com.qualidoc.infrastructure.persistence.entity.*
 import com.qualidoc.infrastructure.persistence.repository.*
 import org.springframework.stereotype.Component
+import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDateTime
 import java.util.UUID
 
 // Chaque adaptateur implémente une interface du domaine (DIP).
@@ -45,6 +47,8 @@ class UserRepositoryAdapter(
     override fun findByEmail(email: String) = jpa.findByEmail(email)?.toDomain()
     override fun findByEstablishmentId(establishmentId: UUID) =
         jpa.findAllByEstablishmentId(establishmentId).map { it.toDomain() }
+    override fun findAll() = jpa.findAll().map { it.toDomain() }
+    override fun deleteById(id: UUID) = jpa.deleteById(id)
 }
 
 @Component
@@ -86,4 +90,18 @@ class NotificationRepositoryAdapter(
         jpa.save(NotificationEntity.fromDomain(notification)).toDomain()
     override fun findPending() = jpa.findAllBySentFalse().map { it.toDomain() }
     override fun markAsSent(id: UUID) = jpa.markAsSent(id)
+}
+
+@Component
+class RefreshTokenRepositoryAdapter(
+    private val jpa: RefreshTokenJpaRepository
+) : RefreshTokenRepository {
+    override fun save(token: RefreshToken) =
+        jpa.save(RefreshTokenEntity.fromDomain(token)).toDomain()
+    override fun findByTokenHash(tokenHash: String) =
+        jpa.findByTokenHash(tokenHash)?.toDomain()
+    @Transactional
+    override fun revokeAllForUser(userId: UUID) = jpa.revokeAllByUserId(userId)
+    @Transactional
+    override fun deleteExpired() = jpa.deleteExpired(LocalDateTime.now())
 }

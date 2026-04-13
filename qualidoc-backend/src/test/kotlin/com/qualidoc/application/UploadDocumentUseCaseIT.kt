@@ -68,7 +68,7 @@ class UploadDocumentUseCaseIT(
             title = "Protocole hygiène",
             type = DocumentType.PROCEDURE,
             uploaderId = EDITOR_MARIE,
-            establishmentId = CHU_TOULOUSE,
+
             filename = "hygiene.pdf",
             mimeType = "application/pdf",
             sizeBytes = pdfBytes.size.toLong(),
@@ -104,7 +104,7 @@ class UploadDocumentUseCaseIT(
             title = "Protocole stérilisation",
             type = DocumentType.PROCEDURE,
             uploaderId = EDITOR_MARIE,
-            establishmentId = CHU_TOULOUSE,
+
             filename = "sterilisation.pdf",
             mimeType = "application/pdf",
             sizeBytes = pdfBytes.size.toLong(),
@@ -130,7 +130,7 @@ class UploadDocumentUseCaseIT(
             title = "Tableau de bord qualité",
             type = DocumentType.FORM,
             uploaderId = EDITOR_MARIE,
-            establishmentId = CHU_TOULOUSE,
+
             filename = "tableau.xlsx",
             mimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             sizeBytes = 512L,

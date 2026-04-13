@@ -3,6 +3,7 @@ package com.qualidoc.application
 import com.qualidoc.application.usecase.GetEstablishmentDocumentsUseCase
 import com.qualidoc.domain.model.*
 import com.qualidoc.domain.repository.DocumentRepository
+import com.qualidoc.domain.repository.EstablishmentRepository
 import com.qualidoc.domain.repository.UserRepository
 import io.mockk.*
 import org.junit.jupiter.api.Assertions.*
@@ -14,13 +15,15 @@ import java.util.UUID
 
 class GetEstablishmentDocumentsUseCaseTest {
 
-    private val documentRepository = mockk<DocumentRepository>()
-    private val userRepository     = mockk<UserRepository>()
+    private val documentRepository      = mockk<DocumentRepository>()
+    private val userRepository           = mockk<UserRepository>()
+    private val establishmentRepository  = mockk<EstablishmentRepository>()
 
     private lateinit var useCase: GetEstablishmentDocumentsUseCase
 
     private val userId          = UUID.randomUUID()
     private val establishmentId = UUID.randomUUID()
+    private val groupementId    = UUID.randomUUID()
 
     private val user = User(
         id = userId,
@@ -31,9 +34,15 @@ class GetEstablishmentDocumentsUseCaseTest {
         role = UserRole.READER
     )
 
+    private val establishment = Establishment(
+        id = establishmentId, name = "CHU Test", code = "CHU", groupementId = groupementId
+    )
+
     @BeforeEach
     fun setUp() {
-        useCase = GetEstablishmentDocumentsUseCase(documentRepository, userRepository)
+        useCase = GetEstablishmentDocumentsUseCase(documentRepository, userRepository, establishmentRepository)
+        every { establishmentRepository.findById(establishmentId) } returns establishment
+        every { establishmentRepository.findByGroupementId(groupementId) } returns listOf(establishment)
     }
 
     @Test
@@ -42,13 +51,12 @@ class GetEstablishmentDocumentsUseCaseTest {
         val doc2 = buildDocument("Formulaire qualité", Instant.now().minusSeconds(30))
 
         every { userRepository.findById(userId) } returns user
-        every { documentRepository.findByEstablishmentId(establishmentId) } returns listOf(doc1, doc2)
+        every { documentRepository.findByEstablishmentIdInAndFolderIdIsNull(listOf(establishmentId)) } returns listOf(doc1, doc2)
 
-        val results = useCase.execute(userId)
+        val results = useCase.execute(userId, null)
 
         assertEquals(2, results.size)
         assertTrue(results.all { it.establishmentId == establishmentId })
-        verify(exactly = 1) { documentRepository.findByEstablishmentId(establishmentId) }
     }
 
     @Test
@@ -57,9 +65,9 @@ class GetEstablishmentDocumentsUseCaseTest {
         val newer = buildDocument("Récent", Instant.now().minusSeconds(10))
 
         every { userRepository.findById(userId) } returns user
-        every { documentRepository.findByEstablishmentId(establishmentId) } returns listOf(older, newer)
+        every { documentRepository.findByEstablishmentIdInAndFolderIdIsNull(listOf(establishmentId)) } returns listOf(older, newer)
 
-        val results = useCase.execute(userId)
+        val results = useCase.execute(userId, null)
 
         assertEquals("Récent", results[0].title)
         assertEquals("Ancien", results[1].title)
@@ -68,9 +76,9 @@ class GetEstablishmentDocumentsUseCaseTest {
     @Test
     fun `une liste vide est retournée si aucun document`() {
         every { userRepository.findById(userId) } returns user
-        every { documentRepository.findByEstablishmentId(establishmentId) } returns emptyList()
+        every { documentRepository.findByEstablishmentIdInAndFolderIdIsNull(listOf(establishmentId)) } returns emptyList()
 
-        val results = useCase.execute(userId)
+        val results = useCase.execute(userId, null)
 
         assertTrue(results.isEmpty())
     }
@@ -80,10 +88,8 @@ class GetEstablishmentDocumentsUseCaseTest {
         every { userRepository.findById(any()) } returns null
 
         assertThrows<IllegalArgumentException> {
-            useCase.execute(UUID.randomUUID())
+            useCase.execute(UUID.randomUUID(), null)
         }
-
-        verify(exactly = 0) { documentRepository.findByEstablishmentId(any()) }
     }
 
     // ── Helper ────────────────────────────────────────────────────────────────

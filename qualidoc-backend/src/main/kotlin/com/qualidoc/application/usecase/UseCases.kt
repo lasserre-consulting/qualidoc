@@ -8,7 +8,11 @@ import com.qualidoc.domain.repository.AuditLogRepository
 import com.qualidoc.domain.repository.DocumentRepository
 import com.qualidoc.domain.repository.EstablishmentRepository
 import com.qualidoc.domain.repository.FolderRepository
+import com.qualidoc.domain.repository.RefreshTokenRepository
 import com.qualidoc.domain.repository.UserRepository
+import org.springframework.security.crypto.password.PasswordEncoder
+import java.security.MessageDigest
+import java.time.LocalDateTime
 import org.apache.pdfbox.Loader
 import org.apache.pdfbox.text.PDFTextStripper
 import org.springframework.stereotype.Service
@@ -418,3 +422,198 @@ fun Document.toDto() = DocumentDto(
     version = version,
     createdAt = createdAt
 )
+
+fun User.toDto() = UserDto(
+    id = id,
+    email = email,
+    firstName = firstName,
+    lastName = lastName,
+    role = role,
+    establishmentId = establishmentId
+)
+
+// ── Auth Use Cases ───────────────────────────────────────────────────────────
+
+class AuthenticationException(message: String) : RuntimeException(message)
+
+private fun sha256(input: String): String {
+    val digest = MessageDigest.getInstance("SHA-256")
+    return digest.digest(input.toByteArray()).joinToString("") { "%02x".format(it) }
+}
+
+@Service
+class LoginUseCase(
+    private val userRepository: UserRepository,
+    private val refreshTokenRepository: RefreshTokenRepository,
+    private val passwordEncoder: PasswordEncoder,
+    private val jwtService: com.qualidoc.infrastructure.security.JwtService
+) {
+    @Transactional
+    fun execute(request: LoginRequest): AuthResponse {
+        val user = userRepository.findByEmail(request.email)
+            ?: throw AuthenticationException("Email ou mot de passe incorrect")
+
+        if (!user.active) throw AuthenticationException("Compte désactivé")
+
+        if (user.passwordHash == null || !passwordEncoder.matches(request.password, user.passwordHash))
+            throw AuthenticationException("Email ou mot de passe incorrect")
+
+        val accessToken = jwtService.generateAccessToken(user)
+        val rawRefreshToken = jwtService.generateRefreshToken()
+
+        refreshTokenRepository.save(
+            RefreshToken(
+                userId = user.id,
+                tokenHash = sha256(rawRefreshToken),
+                expiresAt = LocalDateTime.now().plusSeconds(jwtService.refreshTokenExpirationSeconds())
+            )
+        )
+
+        return AuthResponse(
+            accessToken = accessToken,
+            refreshToken = rawRefreshToken,
+            user = user.toDto()
+        )
+    }
+}
+
+@Service
+class RefreshTokenUseCase(
+    private val userRepository: UserRepository,
+    private val refreshTokenRepository: RefreshTokenRepository,
+    private val jwtService: com.qualidoc.infrastructure.security.JwtService
+) {
+    @Transactional
+    fun execute(request: RefreshRequest): AuthResponse {
+        val tokenHash = sha256(request.refreshToken)
+        val storedToken = refreshTokenRepository.findByTokenHash(tokenHash)
+            ?: throw AuthenticationException("Refresh token invalide")
+
+        if (storedToken.revoked) throw AuthenticationException("Refresh token révoqué")
+        if (storedToken.expiresAt.isBefore(LocalDateTime.now())) throw AuthenticationException("Refresh token expiré")
+
+        // Revoke old token (rotation)
+        refreshTokenRepository.revokeAllForUser(storedToken.userId)
+
+        val user = userRepository.findById(storedToken.userId)
+            ?: throw AuthenticationException("Utilisateur introuvable")
+
+        if (!user.active) throw AuthenticationException("Compte désactivé")
+
+        val newAccessToken = jwtService.generateAccessToken(user)
+        val newRawRefreshToken = jwtService.generateRefreshToken()
+
+        refreshTokenRepository.save(
+            RefreshToken(
+                userId = user.id,
+                tokenHash = sha256(newRawRefreshToken),
+                expiresAt = LocalDateTime.now().plusSeconds(jwtService.refreshTokenExpirationSeconds())
+            )
+        )
+
+        return AuthResponse(
+            accessToken = newAccessToken,
+            refreshToken = newRawRefreshToken,
+            user = user.toDto()
+        )
+    }
+}
+
+@Service
+class LogoutUseCase(
+    private val refreshTokenRepository: RefreshTokenRepository
+) {
+    @Transactional
+    fun execute(userId: UUID) {
+        refreshTokenRepository.revokeAllForUser(userId)
+    }
+}
+
+// ── Admin User Use Cases ─────────────────────────────────────────────────────
+
+@Service
+class ListUsersUseCase(
+    private val userRepository: UserRepository
+) {
+    fun execute(establishmentId: UUID? = null): List<UserDto> {
+        val users = if (establishmentId != null) {
+            userRepository.findByEstablishmentId(establishmentId)
+        } else {
+            userRepository.findAll()
+        }
+        return users.map { it.toDto() }
+    }
+}
+
+@Service
+class CreateUserUseCase(
+    private val userRepository: UserRepository,
+    private val passwordEncoder: PasswordEncoder
+) {
+    @Transactional
+    fun execute(request: CreateUserRequest): UserDto {
+        val existing = userRepository.findByEmail(request.email)
+        if (existing != null) throw IllegalArgumentException("Un utilisateur avec cet email existe déjà")
+
+        val user = userRepository.save(
+            User(
+                email = request.email,
+                firstName = request.firstName,
+                lastName = request.lastName,
+                role = request.role,
+                establishmentId = request.establishmentId,
+                passwordHash = passwordEncoder.encode(request.password)
+            )
+        )
+        return user.toDto()
+    }
+}
+
+@Service
+class UpdateUserUseCase(
+    private val userRepository: UserRepository
+) {
+    @Transactional
+    fun execute(userId: UUID, request: UpdateUserRequest): UserDto {
+        val user = userRepository.findById(userId)
+            ?: throw IllegalArgumentException("Utilisateur introuvable : $userId")
+
+        val updated = user.copy(
+            firstName = request.firstName ?: user.firstName,
+            lastName = request.lastName ?: user.lastName,
+            role = request.role ?: user.role,
+            active = request.active ?: user.active
+        )
+        return userRepository.save(updated).toDto()
+    }
+}
+
+@Service
+class ResetUserPasswordUseCase(
+    private val userRepository: UserRepository,
+    private val refreshTokenRepository: RefreshTokenRepository,
+    private val passwordEncoder: PasswordEncoder
+) {
+    @Transactional
+    fun execute(userId: UUID, newPassword: String) {
+        val user = userRepository.findById(userId)
+            ?: throw IllegalArgumentException("Utilisateur introuvable : $userId")
+
+        userRepository.save(user.copy(passwordHash = passwordEncoder.encode(newPassword)))
+        refreshTokenRepository.revokeAllForUser(userId)
+    }
+}
+
+@Service
+class DeleteUserUseCase(
+    private val userRepository: UserRepository,
+    private val refreshTokenRepository: RefreshTokenRepository
+) {
+    @Transactional
+    fun execute(userId: UUID) {
+        val user = userRepository.findById(userId)
+            ?: throw IllegalArgumentException("Utilisateur introuvable : $userId")
+        refreshTokenRepository.revokeAllForUser(userId)
+        userRepository.deleteById(userId)
+    }
+}

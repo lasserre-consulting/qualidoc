@@ -1,6 +1,7 @@
 package com.qualidoc.domain.model
 
 import java.time.Instant
+import java.time.LocalDateTime
 import java.util.UUID
 
 // ── Établissement ────────────────────────────────────────────────────────────
@@ -31,6 +32,7 @@ data class User(
     val lastName: String,
     val role: UserRole,
     val active: Boolean = true,
+    val passwordHash: String? = null,
     val createdAt: Instant = Instant.now()
 ) {
     val fullName: String get() = "$firstName $lastName"
@@ -106,4 +108,15 @@ data class Notification(
     val body: String,
     val sent: Boolean = false,
     val createdAt: Instant = Instant.now()
+)
+
+// ── Refresh Token ────────────────────────────────────────────────────────────
+
+data class RefreshToken(
+    val id: UUID = UUID.randomUUID(),
+    val userId: UUID,
+    val tokenHash: String,
+    val expiresAt: LocalDateTime,
+    val revoked: Boolean = false,
+    val createdAt: LocalDateTime = LocalDateTime.now()
 )

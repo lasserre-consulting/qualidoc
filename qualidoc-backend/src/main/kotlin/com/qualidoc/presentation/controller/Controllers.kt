@@ -5,10 +5,10 @@ import com.qualidoc.application.dto.EstablishmentDto
 import com.qualidoc.application.dto.SearchDocumentQuery
 import com.qualidoc.application.dto.SearchResultDto
 import com.qualidoc.application.dto.UploadDocumentCommand
-import com.qualidoc.application.dto.UserDto
 import com.qualidoc.application.dto.FolderDto
 import com.qualidoc.application.usecase.*
 import com.qualidoc.domain.model.DocumentType
+import com.qualidoc.infrastructure.security.AuthenticatedUser
 import org.springframework.core.io.InputStreamResource
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
@@ -18,7 +18,6 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
-import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 import java.util.UUID
@@ -43,9 +42,9 @@ class DocumentController(
     fun listDocuments(
         @RequestParam(required = false) folderId: UUID?,
         @RequestParam(required = false, defaultValue = "false") all: Boolean,
-        @AuthenticationPrincipal jwt: Jwt
+        @AuthenticationPrincipal user: AuthenticatedUser
     ): ResponseEntity<List<DocumentDto>> {
-        return ResponseEntity.ok(getEstablishmentDocumentsUseCase.execute(jwt.userId(), folderId, all))
+        return ResponseEntity.ok(getEstablishmentDocumentsUseCase.execute(user.id, folderId, all))
     }
 
     @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
@@ -56,12 +55,12 @@ class DocumentController(
         @RequestParam("title") title: String,
         @RequestParam("type") type: DocumentType,
         @RequestParam("folderId", required = false) folderId: UUID?,
-        @AuthenticationPrincipal jwt: Jwt
+        @AuthenticationPrincipal user: AuthenticatedUser
     ): ResponseEntity<DocumentDto> {
         val command = UploadDocumentCommand(
             title = title,
             type = type,
-            uploaderId = jwt.userId(),
+            uploaderId = user.id,
             folderId = folderId,
             filename = file.originalFilename ?: file.name,
             mimeType = file.contentType ?: MediaType.APPLICATION_OCTET_STREAM_VALUE,
@@ -75,9 +74,9 @@ class DocumentController(
     @Operation(summary = "Télécharge le fichier binaire d'un document")
     fun downloadDocument(
         @PathVariable documentId: UUID,
-        @AuthenticationPrincipal jwt: Jwt
+        @AuthenticationPrincipal user: AuthenticatedUser
     ): ResponseEntity<InputStreamResource> {
-        val result = downloadDocumentUseCase.execute(documentId, jwt.userId())
+        val result = downloadDocumentUseCase.execute(documentId, user.id)
         return ResponseEntity.ok()
             .contentType(MediaType.parseMediaType(result.mimeType))
             .contentLength(result.sizeBytes)
@@ -90,10 +89,10 @@ class DocumentController(
     fun moveDocument(
         @PathVariable documentId: UUID,
         @RequestBody body: Map<String, String?>,
-        @AuthenticationPrincipal jwt: Jwt
+        @AuthenticationPrincipal user: AuthenticatedUser
     ): ResponseEntity<DocumentDto> {
         val targetFolderId = body["folderId"]?.let { UUID.fromString(it) }
-        return ResponseEntity.ok(moveDocumentUseCase.execute(documentId, targetFolderId, jwt.userId()))
+        return ResponseEntity.ok(moveDocumentUseCase.execute(documentId, targetFolderId, user.id))
     }
 
     @PatchMapping("/{documentId}/rename")
@@ -101,11 +100,11 @@ class DocumentController(
     fun renameDocument(
         @PathVariable documentId: UUID,
         @RequestBody body: Map<String, String>,
-        @AuthenticationPrincipal jwt: Jwt
+        @AuthenticationPrincipal user: AuthenticatedUser
     ): ResponseEntity<DocumentDto> {
         val newTitle = body["title"]?.takeIf { it.isNotBlank() }
             ?: return ResponseEntity.badRequest().build()
-        return ResponseEntity.ok(renameDocumentUseCase.execute(documentId, newTitle, jwt.userId()))
+        return ResponseEntity.ok(renameDocumentUseCase.execute(documentId, newTitle, user.id))
     }
 
     @DeleteMapping("/{documentId}")
@@ -113,9 +112,9 @@ class DocumentController(
     @Operation(summary = "Supprime un document (éditeurs uniquement)")
     fun deleteDocument(
         @PathVariable documentId: UUID,
-        @AuthenticationPrincipal jwt: Jwt
+        @AuthenticationPrincipal user: AuthenticatedUser
     ): ResponseEntity<Void> {
-        deleteDocumentUseCase.execute(documentId, jwt.userId())
+        deleteDocumentUseCase.execute(documentId, user.id)
         return ResponseEntity.noContent().build()
     }
 
@@ -135,10 +134,10 @@ class SearchController(
     @Operation(summary = "Recherche full-text dans les documents accessibles")
     fun search(
         @RequestParam @NotBlank q: String,
-        @AuthenticationPrincipal jwt: Jwt
+        @AuthenticationPrincipal user: AuthenticatedUser
     ): ResponseEntity<List<SearchResultDto>> {
         val results = searchDocumentUseCase.execute(
-            SearchDocumentQuery(query = q, requestingUserId = jwt.userId())
+            SearchDocumentQuery(query = q, requestingUserId = user.id)
         )
         return ResponseEntity.ok(results)
     }
@@ -177,39 +176,39 @@ class FolderController(
     private val deleteFolderUseCase: DeleteFolderUseCase
 ) {
     @GetMapping
-    fun listFolders(@AuthenticationPrincipal jwt: Jwt): ResponseEntity<List<FolderDto>> =
-        ResponseEntity.ok(getFoldersUseCase.execute(jwt.userId()))
+    fun listFolders(@AuthenticationPrincipal user: AuthenticatedUser): ResponseEntity<List<FolderDto>> =
+        ResponseEntity.ok(getFoldersUseCase.execute(user.id))
 
     @PostMapping
     fun createFolder(
         @RequestBody body: Map<String, String?>,
-        @AuthenticationPrincipal jwt: Jwt
+        @AuthenticationPrincipal user: AuthenticatedUser
     ): ResponseEntity<FolderDto> {
         val name = body["name"]?.takeIf { it.isNotBlank() }
             ?: return ResponseEntity.badRequest().build()
         val parentId = body["parentId"]?.let { UUID.fromString(it) }
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(createFolderUseCase.execute(name, parentId, jwt.userId()))
+            .body(createFolderUseCase.execute(name, parentId, user.id))
     }
 
     @PatchMapping("/{folderId}/rename")
     fun renameFolder(
         @PathVariable folderId: UUID,
         @RequestBody body: Map<String, String>,
-        @AuthenticationPrincipal jwt: Jwt
+        @AuthenticationPrincipal user: AuthenticatedUser
     ): ResponseEntity<FolderDto> {
         val name = body["name"]?.takeIf { it.isNotBlank() }
             ?: return ResponseEntity.badRequest().build()
-        return ResponseEntity.ok(renameFolderUseCase.execute(folderId, name, jwt.userId()))
+        return ResponseEntity.ok(renameFolderUseCase.execute(folderId, name, user.id))
     }
 
     @DeleteMapping("/{folderId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun deleteFolder(
         @PathVariable folderId: UUID,
-        @AuthenticationPrincipal jwt: Jwt
+        @AuthenticationPrincipal user: AuthenticatedUser
     ): ResponseEntity<Void> {
-        deleteFolderUseCase.execute(folderId, jwt.userId())
+        deleteFolderUseCase.execute(folderId, user.id)
         return ResponseEntity.noContent().build()
     }
 }
@@ -222,7 +221,3 @@ class HealthController {
     @GetMapping
     fun health() = mapOf("status" to "UP", "service" to "QualiDoc Backend")
 }
-
-// ── Helpers JWT ───────────────────────────────────────────────────────────────
-
-private fun Jwt.userId(): UUID = UUID.fromString(getClaimAsString("sub"))

@@ -39,6 +39,8 @@ interface UserRepository {
     fun findById(id: UUID): User?
     fun findByEmail(email: String): User?
     fun findByEstablishmentId(establishmentId: UUID): List<User>
+    fun findAll(): List<User>
+    fun deleteById(id: UUID)
 }
 
 interface AuditLogRepository {
@@ -51,4 +53,11 @@ interface NotificationRepository {
     fun save(notification: Notification): Notification
     fun findPending(): List<Notification>
     fun markAsSent(id: UUID)
+}
+
+interface RefreshTokenRepository {
+    fun save(token: RefreshToken): RefreshToken
+    fun findByTokenHash(tokenHash: String): RefreshToken?
+    fun revokeAllForUser(userId: UUID)
+    fun deleteExpired()
 }

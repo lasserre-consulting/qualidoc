@@ -3,6 +3,7 @@ package com.qualidoc.infrastructure.persistence.entity
 import com.qualidoc.domain.model.*
 import jakarta.persistence.*
 import java.time.Instant
+import java.time.LocalDateTime
 import java.util.UUID
 
 // ── Establishment ─────────────────────────────────────────────────────────────
@@ -59,19 +60,20 @@ class UserEntity(
     @Enumerated(EnumType.STRING)
     @Column(nullable = false) val role: UserRole,
     @Column(nullable = false) val active: Boolean = true,
+    @Column(name = "password_hash") val passwordHash: String? = null,
     @Column(name = "created_at", nullable = false) val createdAt: Instant = Instant.now()
 ) {
     fun toDomain() = User(
         id = id, establishmentId = establishmentId, email = email,
         firstName = firstName, lastName = lastName, role = role,
-        active = active, createdAt = createdAt
+        active = active, passwordHash = passwordHash, createdAt = createdAt
     )
 
     companion object {
         fun fromDomain(u: User) = UserEntity(
             id = u.id, establishmentId = u.establishmentId, email = u.email,
             firstName = u.firstName, lastName = u.lastName, role = u.role,
-            active = u.active, createdAt = u.createdAt
+            active = u.active, passwordHash = u.passwordHash, createdAt = u.createdAt
         )
     }
 }
@@ -164,6 +166,31 @@ class NotificationEntity(
         fun fromDomain(n: Notification) = NotificationEntity(
             id = n.id, documentId = n.documentId, recipientEmail = n.recipientEmail,
             subject = n.subject, body = n.body, sent = n.sent, createdAt = n.createdAt
+        )
+    }
+}
+
+// ── RefreshToken ─────────────────────────────────────────────────────────────
+
+@Entity
+@Table(name = "refresh_token")
+class RefreshTokenEntity(
+    @Id val id: UUID = UUID.randomUUID(),
+    @Column(name = "user_id", nullable = false) val userId: UUID,
+    @Column(name = "token_hash", nullable = false, unique = true) val tokenHash: String,
+    @Column(name = "expires_at", nullable = false) val expiresAt: LocalDateTime,
+    @Column(nullable = false) val revoked: Boolean = false,
+    @Column(name = "created_at", nullable = false) val createdAt: LocalDateTime = LocalDateTime.now()
+) {
+    fun toDomain() = RefreshToken(
+        id = id, userId = userId, tokenHash = tokenHash,
+        expiresAt = expiresAt, revoked = revoked, createdAt = createdAt
+    )
+
+    companion object {
+        fun fromDomain(t: RefreshToken) = RefreshTokenEntity(
+            id = t.id, userId = t.userId, tokenHash = t.tokenHash,
+            expiresAt = t.expiresAt, revoked = t.revoked, createdAt = t.createdAt
         )
     }
 }

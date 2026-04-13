@@ -5,8 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
-
 import org.springframework.stereotype.Repository
+import java.time.LocalDateTime
 import java.util.UUID
 
 @Repository
@@ -49,4 +49,17 @@ interface NotificationJpaRepository : JpaRepository<NotificationEntity, UUID> {
     @Modifying
     @Query("UPDATE NotificationEntity n SET n.sent = true WHERE n.id = :id")
     fun markAsSent(@Param("id") id: UUID)
+}
+
+@Repository
+interface RefreshTokenJpaRepository : JpaRepository<RefreshTokenEntity, UUID> {
+    fun findByTokenHash(tokenHash: String): RefreshTokenEntity?
+
+    @Modifying
+    @Query("UPDATE RefreshTokenEntity t SET t.revoked = true WHERE t.userId = :userId")
+    fun revokeAllByUserId(@Param("userId") userId: UUID)
+
+    @Modifying
+    @Query("DELETE FROM RefreshTokenEntity t WHERE t.expiresAt < :now")
+    fun deleteExpired(@Param("now") now: LocalDateTime)
 }

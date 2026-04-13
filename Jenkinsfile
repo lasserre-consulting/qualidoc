@@ -24,7 +24,9 @@ pipeline {
             }
             post {
                 always {
-                    junit "${PROJECT_DIR}/qualidoc-backend/build/test-results/test/*.xml"
+                    dir("${PROJECT_DIR}/qualidoc-backend") {
+                        junit "build/test-results/test/*.xml"
+                    }
                 }
             }
         }

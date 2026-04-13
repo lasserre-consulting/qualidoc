@@ -27,7 +27,7 @@ export class AuthService {
   logout(): Observable<void> {
     const refreshToken = this.tokenStorage.getRefreshToken();
     this.tokenStorage.clearTokens();
-    return this.http.post<void>(`${this.base}/logout`, { refreshToken });
+    return this.http.post<void>(`${this.base}/logout`, { refreshToken: refreshToken ?? null });
   }
 
   getAccessToken(): string | null {

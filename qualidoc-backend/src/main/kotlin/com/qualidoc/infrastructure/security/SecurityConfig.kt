@@ -86,8 +86,8 @@ class SecurityConfig {
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests { auth ->
                 auth
-                    .requestMatchers("/api/v1/auth/login", "/api/v1/auth/refresh").permitAll()
-                    .requestMatchers("/api/v1/auth/me", "/api/v1/auth/logout").authenticated()
+                    .requestMatchers("/api/v1/auth/login", "/api/v1/auth/refresh", "/api/v1/auth/logout").permitAll()
+                    .requestMatchers("/api/v1/auth/me").authenticated()
                     .requestMatchers("/api/v1/health").permitAll()
                     .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                     .requestMatchers("/actuator/health/**").permitAll()

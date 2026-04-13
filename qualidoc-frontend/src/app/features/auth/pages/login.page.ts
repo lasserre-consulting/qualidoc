@@ -32,11 +32,10 @@ import { AuthActions } from '../../../store/shared.store';
           <form [formGroup]="form" (ngSubmit)="onSubmit()">
 
             <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Adresse email</mat-label>
-              <input matInput formControlName="email" type="email" autocomplete="email">
-              <mat-icon matPrefix>email</mat-icon>
-              <mat-error *ngIf="form.controls.email.hasError('required')">Email requis</mat-error>
-              <mat-error *ngIf="form.controls.email.hasError('email')">Email invalide</mat-error>
+              <mat-label>Identifiant</mat-label>
+              <input matInput formControlName="email" type="text" autocomplete="username">
+              <mat-icon matPrefix>person</mat-icon>
+              <mat-error *ngIf="form.controls.email.hasError('required')">Identifiant requis</mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="full-width">
@@ -119,7 +118,7 @@ export class LoginPageComponent {
   private store       = inject(Store);
 
   form = this.fb.nonNullable.group({
-    email:    ['', [Validators.required, Validators.email]],
+    email:    ['', [Validators.required]],
     password: ['', [Validators.required]],
   });
 

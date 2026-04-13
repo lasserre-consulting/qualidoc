@@ -76,7 +76,7 @@ data class SearchResultDto(
 
 data class LoginRequest(val email: String, val password: String)
 data class AuthResponse(val accessToken: String, val refreshToken: String, val user: UserDto)
-data class RefreshRequest(val refreshToken: String)
+data class RefreshRequest(val refreshToken: String?)
 data class ChangePasswordRequest(val currentPassword: String, val newPassword: String)
 
 // ── Admin Users DTOs ─────────────────────────────────────────────────────────

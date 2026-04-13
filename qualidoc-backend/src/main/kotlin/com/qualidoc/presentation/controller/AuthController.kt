@@ -18,6 +18,8 @@ import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
 
+data class LogoutRequest(val refreshToken: String? = null)
+
 @RestController
 @RequestMapping("/api/v1/auth")
 @Tag(name = "Authentification", description = "Login, logout, refresh token")
@@ -43,10 +45,9 @@ class AuthController(
     }
 
     @PostMapping("/logout")
-    @SecurityRequirement(name = "bearerAuth")
-    @Operation(summary = "Révocation de tous les refresh tokens")
-    fun logout(@AuthenticationPrincipal user: AuthenticatedUser): ResponseEntity<Void> {
-        logoutUseCase.execute(user.id)
+    @Operation(summary = "Révocation du refresh token")
+    fun logout(@RequestBody(required = false) request: LogoutRequest?): ResponseEntity<Void> {
+        logoutUseCase.execute(request?.refreshToken)
         return ResponseEntity.ok().build()
     }
 

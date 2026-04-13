@@ -511,6 +511,7 @@ class RefreshTokenUseCase(
 ) {
     @Transactional
     fun execute(request: RefreshRequest): AuthResponse {
+        if (request.refreshToken.isNullOrBlank()) throw AuthenticationException("Refresh token manquant")
         val tokenHash = sha256(request.refreshToken)
         val storedToken = refreshTokenRepository.findByTokenHash(tokenHash)
             ?: throw AuthenticationException("Refresh token invalide")
@@ -550,8 +551,11 @@ class LogoutUseCase(
     private val refreshTokenRepository: RefreshTokenRepository
 ) {
     @Transactional
-    fun execute(userId: UUID) {
-        refreshTokenRepository.revokeAllForUser(userId)
+    fun execute(refreshToken: String?) {
+        if (refreshToken.isNullOrBlank()) return
+        val tokenHash = sha256(refreshToken)
+        val stored = refreshTokenRepository.findByTokenHash(tokenHash) ?: return
+        refreshTokenRepository.revokeAllForUser(stored.userId)
     }
 }
 

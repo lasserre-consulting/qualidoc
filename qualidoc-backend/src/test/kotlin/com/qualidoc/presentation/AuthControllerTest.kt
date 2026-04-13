@@ -161,24 +161,25 @@ class AuthControllerTest {
     // ── POST /api/v1/auth/logout ────────────────────────────────────────────
 
     @Test
-    fun `POST logout should_return_200_with_valid_token`() {
-        every { logoutUseCase.execute(TestFixtures.EDITOR_ID) } just Runs
+    fun `POST logout should_return_200_with_refresh_token_in_body`() {
+        every { logoutUseCase.execute("some-refresh-token") } just Runs
 
         mockMvc.post("/api/v1/auth/logout") {
-            header("Authorization", "Bearer ${editorToken()}")
+            contentType = MediaType.APPLICATION_JSON
+            content = """{"refreshToken":"some-refresh-token"}"""
         }.andExpect {
             status { isOk() }
         }
 
-        verify(exactly = 1) { logoutUseCase.execute(TestFixtures.EDITOR_ID) }
+        verify(exactly = 1) { logoutUseCase.execute("some-refresh-token") }
     }
 
     @Test
-    fun `POST logout should_fail_without_token`() {
-        // /api/v1/auth/** is permitAll, so without a token the principal is null
-        // which results in a 500 (NullPointerException on @AuthenticationPrincipal)
+    fun `POST logout should_return_200_without_body`() {
+        every { logoutUseCase.execute(null) } just Runs
+
         mockMvc.post("/api/v1/auth/logout").andExpect {
-            status { is5xxServerError() }
+            status { isOk() }
         }
     }
 
@@ -201,11 +202,9 @@ class AuthControllerTest {
     }
 
     @Test
-    fun `GET me should_fail_without_token`() {
-        // /api/v1/auth/** is permitAll, so without a token the principal is null
-        // which results in a 500 (NullPointerException on @AuthenticationPrincipal)
+    fun `GET me should_return_401_without_token`() {
         mockMvc.get("/api/v1/auth/me").andExpect {
-            status { is5xxServerError() }
+            status { isUnauthorized() }
         }
     }
 }

@@ -140,6 +140,7 @@ export class LoginPageComponent {
 
     this.authService.login(email, password).subscribe({
       next: () => {
+        this.loading = false;
         this.store.dispatch(AuthActions.loadProfile());
         this.router.navigate(['/dashboard']);
       },

@@ -150,17 +150,13 @@ class SearchController(
 @Tag(name = "Établissements", description = "Gestion des établissements")
 @SecurityRequirement(name = "bearerAuth")
 class EstablishmentController(
-    private val establishmentRepository: com.qualidoc.domain.repository.EstablishmentRepository
+    private val listActiveEstablishmentsUseCase: ListActiveEstablishmentsUseCase
 ) {
 
     @GetMapping
     @Operation(summary = "Liste tous les établissements actifs")
-    fun listAll(): ResponseEntity<List<EstablishmentDto>> {
-        val dtos = establishmentRepository.findAll()
-            .filter { it.active }
-            .map { EstablishmentDto(it.id, it.name, it.code, it.active) }
-        return ResponseEntity.ok(dtos)
-    }
+    fun listAll(): ResponseEntity<List<EstablishmentDto>> =
+        ResponseEntity.ok(listActiveEstablishmentsUseCase.execute())
 }
 
 // ── Dossiers ─────────────────────────────────────────────────────────────────

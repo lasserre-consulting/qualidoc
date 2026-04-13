@@ -2,6 +2,7 @@ package com.qualidoc.application.usecase
 
 import com.qualidoc.application.dto.*
 import com.qualidoc.domain.model.*
+import com.qualidoc.domain.port.JwtPort
 import com.qualidoc.domain.port.SearchPort
 import com.qualidoc.domain.port.StoragePort
 import com.qualidoc.domain.repository.AuditLogRepository
@@ -402,6 +403,31 @@ class DeleteFolderUseCase(
     }
 }
 
+// ── Liste des établissements actifs ──────────────────────────────────────────
+
+@Service
+class ListActiveEstablishmentsUseCase(
+    private val establishmentRepository: EstablishmentRepository
+) {
+    fun execute(): List<EstablishmentDto> =
+        establishmentRepository.findAll()
+            .filter { it.active }
+            .map { EstablishmentDto(it.id, it.name, it.code, it.active) }
+}
+
+// ── Récupération de l'utilisateur courant ───────────────────────────────────
+
+@Service
+class GetCurrentUserUseCase(
+    private val userRepository: UserRepository
+) {
+    fun execute(userId: UUID): UserDto {
+        val user = userRepository.findById(userId)
+            ?: throw IllegalArgumentException("Utilisateur introuvable : $userId")
+        return user.toDto()
+    }
+}
+
 // ── Extension helpers ─────────────────────────────────────────────────────────
 
 fun Folder.toDto() = FolderDto(
@@ -446,7 +472,7 @@ class LoginUseCase(
     private val userRepository: UserRepository,
     private val refreshTokenRepository: RefreshTokenRepository,
     private val passwordEncoder: PasswordEncoder,
-    private val jwtService: com.qualidoc.infrastructure.security.JwtService
+    private val jwtPort: JwtPort
 ) {
     @Transactional
     fun execute(request: LoginRequest): AuthResponse {
@@ -458,14 +484,14 @@ class LoginUseCase(
         if (user.passwordHash == null || !passwordEncoder.matches(request.password, user.passwordHash))
             throw AuthenticationException("Email ou mot de passe incorrect")
 
-        val accessToken = jwtService.generateAccessToken(user)
-        val rawRefreshToken = jwtService.generateRefreshToken()
+        val accessToken = jwtPort.generateAccessToken(user)
+        val rawRefreshToken = jwtPort.generateRefreshToken()
 
         refreshTokenRepository.save(
             RefreshToken(
                 userId = user.id,
                 tokenHash = sha256(rawRefreshToken),
-                expiresAt = LocalDateTime.now().plusSeconds(jwtService.refreshTokenExpirationSeconds())
+                expiresAt = LocalDateTime.now().plusSeconds(jwtPort.refreshTokenExpirationSeconds())
             )
         )
 
@@ -481,7 +507,7 @@ class LoginUseCase(
 class RefreshTokenUseCase(
     private val userRepository: UserRepository,
     private val refreshTokenRepository: RefreshTokenRepository,
-    private val jwtService: com.qualidoc.infrastructure.security.JwtService
+    private val jwtPort: JwtPort
 ) {
     @Transactional
     fun execute(request: RefreshRequest): AuthResponse {
@@ -500,14 +526,14 @@ class RefreshTokenUseCase(
 
         if (!user.active) throw AuthenticationException("Compte désactivé")
 
-        val newAccessToken = jwtService.generateAccessToken(user)
-        val newRawRefreshToken = jwtService.generateRefreshToken()
+        val newAccessToken = jwtPort.generateAccessToken(user)
+        val newRawRefreshToken = jwtPort.generateRefreshToken()
 
         refreshTokenRepository.save(
             RefreshToken(
                 userId = user.id,
                 tokenHash = sha256(newRawRefreshToken),
-                expiresAt = LocalDateTime.now().plusSeconds(jwtService.refreshTokenExpirationSeconds())
+                expiresAt = LocalDateTime.now().plusSeconds(jwtPort.refreshTokenExpirationSeconds())
             )
         )
 

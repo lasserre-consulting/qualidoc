@@ -1,7 +1,16 @@
 package com.qualidoc.domain.port
 
+import com.qualidoc.domain.model.User
 import java.io.InputStream
 import java.util.UUID
+
+// ── Port JWT (génération / validation de tokens) ─────────────────────────────
+
+interface JwtPort {
+    fun generateAccessToken(user: User): String
+    fun generateRefreshToken(): String
+    fun refreshTokenExpirationSeconds(): Long
+}
 
 // ── Port stockage objet (MinIO / S3) ──────────────────────────────────────────
 

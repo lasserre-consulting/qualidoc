@@ -1,6 +1,7 @@
 package com.qualidoc.infrastructure.security
 
 import com.qualidoc.domain.model.User
+import com.qualidoc.domain.port.JwtPort
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.JwtException
 import io.jsonwebtoken.Jwts
@@ -16,10 +17,10 @@ class JwtService(
     @param:Value("\${app.jwt.secret}") private val secret: String,
     @param:Value("\${app.jwt.access-token-expiration:900}") private val accessTokenExpiration: Long,
     @param:Value("\${app.jwt.refresh-token-expiration:604800}") private val refreshTokenExpiration: Long
-) {
+) : JwtPort {
     private val key: SecretKey = Keys.hmacShaKeyFor(secret.toByteArray())
 
-    fun generateAccessToken(user: User): String {
+    override fun generateAccessToken(user: User): String {
         val now = Date()
         val expiry = Date(now.time + accessTokenExpiration * 1000)
         return Jwts.builder()
@@ -32,9 +33,9 @@ class JwtService(
             .compact()
     }
 
-    fun generateRefreshToken(): String = UUID.randomUUID().toString()
+    override fun generateRefreshToken(): String = UUID.randomUUID().toString()
 
-    fun refreshTokenExpirationSeconds(): Long = refreshTokenExpiration
+    override fun refreshTokenExpirationSeconds(): Long = refreshTokenExpiration
 
     fun parseAccessToken(token: String): Claims =
         Jwts.parser()

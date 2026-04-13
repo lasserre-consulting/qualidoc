@@ -5,11 +5,10 @@ import com.qualidoc.application.dto.LoginRequest
 import com.qualidoc.application.dto.RefreshRequest
 import com.qualidoc.application.dto.UserDto
 import com.qualidoc.application.usecase.AuthenticationException
+import com.qualidoc.application.usecase.GetCurrentUserUseCase
 import com.qualidoc.application.usecase.LoginUseCase
 import com.qualidoc.application.usecase.LogoutUseCase
 import com.qualidoc.application.usecase.RefreshTokenUseCase
-import com.qualidoc.application.usecase.toDto
-import com.qualidoc.domain.repository.UserRepository
 import com.qualidoc.infrastructure.security.AuthenticatedUser
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
@@ -26,7 +25,7 @@ class AuthController(
     private val loginUseCase: LoginUseCase,
     private val refreshTokenUseCase: RefreshTokenUseCase,
     private val logoutUseCase: LogoutUseCase,
-    private val userRepository: UserRepository
+    private val getCurrentUserUseCase: GetCurrentUserUseCase
 ) {
 
     @PostMapping("/login")
@@ -54,11 +53,8 @@ class AuthController(
     @GetMapping("/me")
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Informations de l'utilisateur connecté")
-    fun me(@AuthenticationPrincipal user: AuthenticatedUser): ResponseEntity<UserDto> {
-        val domainUser = userRepository.findById(user.id)
-            ?: return ResponseEntity.notFound().build()
-        return ResponseEntity.ok(domainUser.toDto())
-    }
+    fun me(@AuthenticationPrincipal user: AuthenticatedUser): ResponseEntity<UserDto> =
+        ResponseEntity.ok(getCurrentUserUseCase.execute(user.id))
 
     @ExceptionHandler(AuthenticationException::class)
     fun handleAuthException(ex: AuthenticationException): ResponseEntity<Map<String, String>> =

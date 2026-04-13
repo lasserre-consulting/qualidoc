@@ -9,3 +9,4 @@ qualidoc-k8s/config/secrets.yaml
 *.env
 *.pem
 *.key
+.kotlin/
